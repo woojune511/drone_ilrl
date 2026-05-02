@@ -1,0 +1,528 @@
+{
+  "scratch": {
+    "name": "ppo_scratch",
+    "num_runs": 5,
+    "aggregated_history": {
+      "10000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 30.221041141172822,
+        "return_std": 1.4246029949851515,
+        "distance_mean": 0.7542984165446913,
+        "distance_std": 0.028998200200648527
+      },
+      "20000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 33.02362731340994,
+        "return_std": 3.2117254358581238,
+        "distance_mean": 0.7130352351568939,
+        "distance_std": 0.045147377984659606
+      },
+      "30000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 38.63123232866146,
+        "return_std": 9.148307338281324,
+        "distance_mean": 0.734813024822201,
+        "distance_std": 0.11597458632617408
+      },
+      "40000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 33.856376778317355,
+        "return_std": 8.51148981073348,
+        "distance_mean": 0.9234753965338275,
+        "distance_std": 0.13917325504876865
+      },
+      "50000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 33.78283551157997,
+        "return_std": 7.874264154207575,
+        "distance_mean": 0.9155766175617922,
+        "distance_std": 0.11850252538867818
+      },
+      "60000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 42.36288745648172,
+        "return_std": 9.946766738839118,
+        "distance_mean": 0.8228274444875578,
+        "distance_std": 0.0637661015097964
+      },
+      "70000": {
+        "success_mean": 0.02,
+        "success_std": 0.024494897427831782,
+        "return_mean": 48.52177249898533,
+        "return_std": 9.754051217306493,
+        "distance_mean": 0.7592951840060423,
+        "distance_std": 0.04098269199389038
+      },
+      "80000": {
+        "success_mean": 0.04,
+        "success_std": 0.02,
+        "return_mean": 63.938513270807256,
+        "return_std": 7.211346383361356,
+        "distance_mean": 0.6225295860511346,
+        "distance_std": 0.05920412299567247
+      },
+      "90000": {
+        "success_mean": 0.09000000000000001,
+        "success_std": 0.07348469228349534,
+        "return_mean": 70.91065649288105,
+        "return_std": 3.1749981227447583,
+        "distance_mean": 0.5544246429555716,
+        "distance_std": 0.08459158194610934
+      },
+      "100000": {
+        "success_mean": 0.13999999999999999,
+        "success_std": 0.048989794855663564,
+        "return_mean": 75.6007053838438,
+        "return_std": 7.488206463347591,
+        "distance_mean": 0.47920717088775644,
+        "distance_std": 0.07620248402005439
+      },
+      "110000": {
+        "success_mean": 0.15,
+        "success_std": 0.09486832980505137,
+        "return_mean": 80.91762617889844,
+        "return_std": 8.289521911459284,
+        "distance_mean": 0.4188747566727386,
+        "distance_std": 0.06779661516160106
+      },
+      "120000": {
+        "success_mean": 0.16,
+        "success_std": 0.11135528725660043,
+        "return_mean": 79.69987383380848,
+        "return_std": 3.343341076748384,
+        "distance_mean": 0.4259948763084852,
+        "distance_std": 0.08735000811379848
+      },
+      "130000": {
+        "success_mean": 0.16999999999999998,
+        "success_std": 0.09797958971132711,
+        "return_mean": 80.46834547825924,
+        "return_std": 6.683171510403905,
+        "distance_mean": 0.4110296273300655,
+        "distance_std": 0.03966208096881681
+      },
+      "140000": {
+        "success_mean": 0.09,
+        "success_std": 0.03741657386773941,
+        "return_mean": 84.83566671779582,
+        "return_std": 6.36539488206253,
+        "distance_mean": 0.435183192777182,
+        "distance_std": 0.05439696561203931
+      },
+      "150000": {
+        "success_mean": 0.10999999999999999,
+        "success_std": 0.04898979485566356,
+        "return_mean": 87.20427586112918,
+        "return_std": 4.347424999860039,
+        "distance_mean": 0.37825535142716643,
+        "distance_std": 0.06642192779531624
+      },
+      "160000": {
+        "success_mean": 0.13999999999999999,
+        "success_std": 0.08,
+        "return_mean": 90.27602400213866,
+        "return_std": 8.824348181628531,
+        "distance_mean": 0.3493740441478378,
+        "distance_std": 0.025330672748347584
+      },
+      "170000": {
+        "success_mean": 0.20999999999999996,
+        "success_std": 0.13564659966250536,
+        "return_mean": 86.59131456292708,
+        "return_std": 7.95368353233516,
+        "distance_mean": 0.3314989859508396,
+        "distance_std": 0.06379807550390507
+      },
+      "180000": {
+        "success_mean": 0.17,
+        "success_std": 0.07483314773547882,
+        "return_mean": 92.39102098567537,
+        "return_std": 7.270338769305616,
+        "distance_mean": 0.31233790749668044,
+        "distance_std": 0.054489345993468295
+      },
+      "190000": {
+        "success_mean": 0.22000000000000003,
+        "success_std": 0.10295630140987001,
+        "return_mean": 91.81278121318462,
+        "return_std": 6.764049861899057,
+        "distance_mean": 0.2952317592960926,
+        "distance_std": 0.03864599131405107
+      },
+      "200000": {
+        "success_mean": 0.29000000000000004,
+        "success_std": 0.14966629547095767,
+        "return_mean": 89.32140605580449,
+        "return_std": 10.045929973389109,
+        "distance_mean": 0.25253357982311503,
+        "distance_std": 0.061150454399317544
+      },
+      "210000": {
+        "success_mean": 0.31999999999999995,
+        "success_std": 0.07483314773547883,
+        "return_mean": 87.25535736759254,
+        "return_std": 6.413560186517371,
+        "distance_mean": 0.2353878816795672,
+        "distance_std": 0.0392320600461992
+      },
+      "220000": {
+        "success_mean": 0.31,
+        "success_std": 0.12000000000000001,
+        "return_mean": 91.64854563894048,
+        "return_std": 9.810336323393354,
+        "distance_mean": 0.23357643708769088,
+        "distance_std": 0.022919830336029887
+      },
+      "230000": {
+        "success_mean": 0.38,
+        "success_std": 0.11661903789690602,
+        "return_mean": 87.86177262485731,
+        "return_std": 11.322236484416464,
+        "distance_mean": 0.21966965175478465,
+        "distance_std": 0.03665104728505745
+      },
+      "240000": {
+        "success_mean": 0.29,
+        "success_std": 0.1593737745050923,
+        "return_mean": 92.78737164282872,
+        "return_std": 6.2635661485250385,
+        "distance_mean": 0.21894363084075383,
+        "distance_std": 0.05551951981432474
+      },
+      "250000": {
+        "success_mean": 0.32999999999999996,
+        "success_std": 0.13999999999999999,
+        "return_mean": 91.58109684176267,
+        "return_std": 8.341975731478152,
+        "distance_mean": 0.23037828434083235,
+        "distance_std": 0.04225746658278547
+      },
+      "260000": {
+        "success_mean": 0.19,
+        "success_std": 0.066332495807108,
+        "return_mean": 99.91119917740784,
+        "return_std": 3.639664595120954,
+        "distance_mean": 0.23997979981945888,
+        "distance_std": 0.020213222835172545
+      },
+      "270000": {
+        "success_mean": 0.19,
+        "success_std": 0.13928388277184117,
+        "return_mean": 102.2436918830245,
+        "return_std": 5.17240205385158,
+        "distance_mean": 0.23323411700017535,
+        "distance_std": 0.016487873866444146
+      },
+      "280000": {
+        "success_mean": 0.26,
+        "success_std": 0.2083266665599966,
+        "return_mean": 94.49775131834498,
+        "return_std": 10.058080673580628,
+        "distance_mean": 0.21784705344416522,
+        "distance_std": 0.03550813194417156
+      },
+      "290000": {
+        "success_mean": 0.3,
+        "success_std": 0.15811388300841897,
+        "return_mean": 98.0583362217705,
+        "return_std": 11.960666559578083,
+        "distance_mean": 0.1811653091769405,
+        "distance_std": 0.025737483410543337
+      },
+      "300000": {
+        "success_mean": 0.27,
+        "success_std": 0.2420743687382041,
+        "return_mean": 96.9786727479196,
+        "return_std": 17.990396730446623,
+        "distance_mean": 0.19724087510556249,
+        "distance_std": 0.04053182911108452
+      }
+    },
+    "final_success_mean": 0.3,
+    "final_success_std": 0.21447610589527216,
+    "final_distance_mean": 0.20233232827239328,
+    "final_distance_std": 0.05149246914461898,
+    "final_return_mean": 96.31765622858002,
+    "final_return_std": 14.286539697452637,
+    "auc_success_mean": 47050.0,
+    "auc_success_std": 4240.8725517280045,
+    "steps_to_70_success_mean": null,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_scratch\\ppo_20260501_173521",
+      "artifacts\\checkpoints\\ppo_scratch\\ppo_20260501_183644",
+      "artifacts\\checkpoints\\ppo_scratch\\ppo_20260501_190513",
+      "artifacts\\checkpoints\\ppo_scratch\\ppo_20260501_232823",
+      "artifacts\\checkpoints\\ppo_scratch\\ppo_20260501_235556"
+    ]
+  },
+  "bc_init": {
+    "name": "ppo_bc_init",
+    "num_runs": 5,
+    "aggregated_history": {
+      "10000": {
+        "success_mean": 0.02,
+        "success_std": 0.024494897427831785,
+        "return_mean": 54.52776854306312,
+        "return_std": 4.324276198924781,
+        "distance_mean": 0.48699729076890463,
+        "distance_std": 0.05314221858577354
+      },
+      "20000": {
+        "success_mean": 0.030000000000000006,
+        "success_std": 0.024494897427831782,
+        "return_mean": 60.37913993267006,
+        "return_std": 5.922760008084704,
+        "distance_mean": 0.5132551293975172,
+        "distance_std": 0.08140749650418559
+      },
+      "30000": {
+        "success_mean": 0.05,
+        "success_std": 0.0447213595499958,
+        "return_mean": 49.923803128233885,
+        "return_std": 8.902186994179036,
+        "distance_mean": 0.7163903553492691,
+        "distance_std": 0.10830438782511158
+      },
+      "40000": {
+        "success_mean": 0.02,
+        "success_std": 0.024494897427831782,
+        "return_mean": 48.24260497140963,
+        "return_std": 9.642473605651741,
+        "distance_mean": 0.762066272668786,
+        "distance_std": 0.09778055514129723
+      },
+      "50000": {
+        "success_mean": 0.02,
+        "success_std": 0.04,
+        "return_mean": 58.22138551469984,
+        "return_std": 10.132867998227136,
+        "distance_mean": 0.6646357915388633,
+        "distance_std": 0.1054582651589897
+      },
+      "60000": {
+        "success_mean": 0.02,
+        "success_std": 0.04,
+        "return_mean": 63.18465457567902,
+        "return_std": 10.523935723558804,
+        "distance_mean": 0.6441985954665228,
+        "distance_std": 0.0893192643378712
+      },
+      "70000": {
+        "success_mean": 0.05,
+        "success_std": 0.05477225575051661,
+        "return_mean": 67.72810271829343,
+        "return_std": 8.980920682220104,
+        "distance_mean": 0.6046728819009806,
+        "distance_std": 0.08649145556681519
+      },
+      "80000": {
+        "success_mean": 0.08,
+        "success_std": 0.116619037896906,
+        "return_mean": 72.44817967539,
+        "return_std": 6.489709094994545,
+        "distance_mean": 0.5317472308672614,
+        "distance_std": 0.11549432099475863
+      },
+      "90000": {
+        "success_mean": 0.04,
+        "success_std": 0.058309518948453,
+        "return_mean": 73.98137406861665,
+        "return_std": 6.558238973679949,
+        "distance_mean": 0.5269735900089957,
+        "distance_std": 0.10052302442839851
+      },
+      "100000": {
+        "success_mean": 0.08,
+        "success_std": 0.09273618495495704,
+        "return_mean": 81.7434956464235,
+        "return_std": 7.362896889421971,
+        "distance_mean": 0.4472518319558222,
+        "distance_std": 0.09404353666650926
+      },
+      "110000": {
+        "success_mean": 0.11000000000000001,
+        "success_std": 0.09695359714832658,
+        "return_mean": 85.71224356856011,
+        "return_std": 6.644323804408048,
+        "distance_mean": 0.41677400699478645,
+        "distance_std": 0.10151290122996143
+      },
+      "120000": {
+        "success_mean": 0.12,
+        "success_std": 0.06782329983125268,
+        "return_mean": 81.5608775943875,
+        "return_std": 5.323502852704479,
+        "distance_mean": 0.4306484032671194,
+        "distance_std": 0.06981917763928691
+      },
+      "130000": {
+        "success_mean": 0.12,
+        "success_std": 0.10295630140987,
+        "return_mean": 83.5000397824177,
+        "return_std": 9.076322507855213,
+        "distance_mean": 0.4171709849355828,
+        "distance_std": 0.0816898406035417
+      },
+      "140000": {
+        "success_mean": 0.13,
+        "success_std": 0.06782329983125268,
+        "return_mean": 89.37371047521694,
+        "return_std": 10.215702469939961,
+        "distance_mean": 0.38650146611728026,
+        "distance_std": 0.10047327102126712
+      },
+      "150000": {
+        "success_mean": 0.18,
+        "success_std": 0.14696938456699069,
+        "return_mean": 87.54864097887052,
+        "return_std": 6.699604007563628,
+        "distance_mean": 0.34993950034505794,
+        "distance_std": 0.11124129018696112
+      },
+      "160000": {
+        "success_mean": 0.16999999999999998,
+        "success_std": 0.10295630140987,
+        "return_mean": 88.37994951183025,
+        "return_std": 9.197440877029349,
+        "distance_mean": 0.3589564024485757,
+        "distance_std": 0.11436920787886026
+      },
+      "170000": {
+        "success_mean": 0.19,
+        "success_std": 0.12,
+        "return_mean": 86.80772314692946,
+        "return_std": 5.2809138873663715,
+        "distance_mean": 0.3533218945324479,
+        "distance_std": 0.12053761294676044
+      },
+      "180000": {
+        "success_mean": 0.20999999999999996,
+        "success_std": 0.07348469228349533,
+        "return_mean": 89.03366111599381,
+        "return_std": 10.348151958841054,
+        "distance_mean": 0.32375880102408094,
+        "distance_std": 0.0915636861188564
+      },
+      "190000": {
+        "success_mean": 0.2,
+        "success_std": 0.1788854381999832,
+        "return_mean": 85.64813345716178,
+        "return_std": 9.816499413441363,
+        "distance_mean": 0.35229382807843956,
+        "distance_std": 0.11218111900272427
+      },
+      "200000": {
+        "success_mean": 0.33999999999999997,
+        "success_std": 0.19078784028338913,
+        "return_mean": 84.25449549039612,
+        "return_std": 8.817541569971194,
+        "distance_mean": 0.2882991998172991,
+        "distance_std": 0.10009238784486639
+      },
+      "210000": {
+        "success_mean": 0.32,
+        "success_std": 0.14696938456699069,
+        "return_mean": 87.4818293332307,
+        "return_std": 4.197528421852317,
+        "distance_mean": 0.26945112459278475,
+        "distance_std": 0.09727144113853187
+      },
+      "220000": {
+        "success_mean": 0.29,
+        "success_std": 0.17720045146669353,
+        "return_mean": 89.87321055317885,
+        "return_std": 7.92280195867293,
+        "distance_mean": 0.2636168461568422,
+        "distance_std": 0.09111980245187096
+      },
+      "230000": {
+        "success_mean": 0.13999999999999999,
+        "success_std": 0.11575836902790225,
+        "return_mean": 98.16186587181618,
+        "return_std": 5.930577196985718,
+        "distance_mean": 0.29928693891972447,
+        "distance_std": 0.07930807861032124
+      },
+      "240000": {
+        "success_mean": 0.31,
+        "success_std": 0.2537715508089904,
+        "return_mean": 89.94681315196802,
+        "return_std": 12.969142875023296,
+        "distance_mean": 0.23417006924308828,
+        "distance_std": 0.07532343958573752
+      },
+      "250000": {
+        "success_mean": 0.28,
+        "success_std": 0.2181742422927143,
+        "return_mean": 92.35656413241627,
+        "return_std": 10.336541227908835,
+        "distance_mean": 0.23339581355525046,
+        "distance_std": 0.055301464644287555
+      },
+      "260000": {
+        "success_mean": 0.21999999999999997,
+        "success_std": 0.1503329637837291,
+        "return_mean": 99.54483711527598,
+        "return_std": 9.248566154236498,
+        "distance_mean": 0.23284045529739164,
+        "distance_std": 0.03639643028396436
+      },
+      "270000": {
+        "success_mean": 0.3,
+        "success_std": 0.10954451150103323,
+        "return_mean": 96.35517184294665,
+        "return_std": 10.343907125945142,
+        "distance_mean": 0.2185794578320604,
+        "distance_std": 0.039901549753202877
+      },
+      "280000": {
+        "success_mean": 0.32,
+        "success_std": 0.15684387141358122,
+        "return_mean": 96.37127976203048,
+        "return_std": 10.580535768933881,
+        "distance_mean": 0.20140436890975674,
+        "distance_std": 0.046008127166788856
+      },
+      "290000": {
+        "success_mean": 0.22999999999999998,
+        "success_std": 0.09273618495495704,
+        "return_mean": 97.11682196442095,
+        "return_std": 6.881684458659283,
+        "distance_mean": 0.24396999973409228,
+        "distance_std": 0.027650127194990017
+      },
+      "300000": {
+        "success_mean": 0.22000000000000003,
+        "success_std": 0.12884098726725127,
+        "return_mean": 101.93191606594516,
+        "return_std": 13.984899414004882,
+        "distance_mean": 0.2234466187985793,
+        "distance_std": 0.011326411194572433
+      }
+    },
+    "final_success_mean": 0.27999999999999997,
+    "final_success_std": 0.09273618495495704,
+    "final_distance_mean": 0.2109243504594176,
+    "final_distance_std": 0.019951329365596838,
+    "final_return_mean": 97.81582465780271,
+    "final_return_std": 5.982514509083949,
+    "auc_success_mean": 46900.0,
+    "auc_success_std": 22486.440358580545,
+    "steps_to_70_success_mean": 240000.0,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_bc_init\\ppo_bc_init_20260501_180253",
+      "artifacts\\checkpoints\\ppo_bc_init\\ppo_bc_init_20260501_183644",
+      "artifacts\\checkpoints\\ppo_bc_init\\ppo_bc_init_20260501_190513",
+      "artifacts\\checkpoints\\ppo_bc_init\\ppo_bc_init_20260501_232823",
+      "artifacts\\checkpoints\\ppo_bc_init\\ppo_bc_init_20260501_235556"
+    ]
+  }
+}
