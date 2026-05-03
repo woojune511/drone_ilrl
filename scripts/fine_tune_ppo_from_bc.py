@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 
 from ilrl_lab.ppo_training import (
-    PeriodicEvalCallback,
+    build_bc_fine_tune_callback,
     build_ppo_model,
     build_training_env,
     evaluate_model,
@@ -43,33 +43,76 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clip-range", type=float, default=0.2)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--vf-coef", type=float, default=0.5)
+    parser.add_argument(
+        "--log-std-init",
+        type=float,
+        default=0.0,
+        help="Initial log standard deviation for the PPO Gaussian policy.",
+    )
+    parser.add_argument(
+        "--bc-kl-coef",
+        type=float,
+        default=0.0,
+        help="Coefficient for KL-style regularization toward the BC policy mean.",
+    )
+    parser.add_argument(
+        "--freeze-actor-steps",
+        type=int,
+        default=0,
+        help="Number of initial environment steps to freeze the BC-initialized actor layers.",
+    )
+    parser.add_argument(
+        "--freeze-actor-mode",
+        choices=["all", "hidden_only"],
+        default="all",
+        help="Which BC-initialized actor layers to freeze during the warm-start period.",
+    )
     parser.add_argument("--gui", action="store_true", help="Enable GUI for the training environment.")
+    parser.add_argument(
+        "--task-variant",
+        choices=["waypoint", "detour"],
+        default="waypoint",
+        help="Environment variant to train on.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    run_name = datetime.now().strftime("ppo_bc_init_%Y%m%d_%H%M%S")
-    run_dir = args.output_dir / run_name
+    run_name = datetime.now().strftime(f"ppo_bc_init_seed{args.seed}_%Y%m%d_%H%M%S")
+    run_dir = args.output_dir / args.task_variant / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     args.run_dir = run_dir
 
-    env = build_training_env(gui=args.gui, seed=args.seed)
+    env = build_training_env(gui=args.gui, seed=args.seed, task_variant=args.task_variant)
     model = build_ppo_model(env, args.seed, args)
-    init_info = initialize_actor_from_bc(model, args.bc_checkpoint, torch.device("cpu"))
+    init_info = initialize_actor_from_bc(
+        model,
+        args.bc_checkpoint,
+        torch.device("cpu"),
+        bc_kl_coef=args.bc_kl_coef,
+    )
 
-    callback = PeriodicEvalCallback(
+    callback, eval_callback = build_bc_fine_tune_callback(
         eval_freq=args.eval_freq,
         eval_episodes=args.eval_episodes,
         eval_seed=args.seed + 10_000,
         run_dir=run_dir,
+        task_variant=args.task_variant,
+        freeze_actor_steps=args.freeze_actor_steps,
+        freeze_actor_mode=args.freeze_actor_mode,
     )
 
     model.learn(total_timesteps=args.total_timesteps, callback=callback, progress_bar=False)
     final_model_path = run_dir / "final_model.zip"
     model.save(final_model_path)
 
-    final_eval, _ = evaluate_model(model, args.eval_episodes, args.seed + 20_000)
+    final_eval, _ = evaluate_model(
+        model,
+        args.eval_episodes,
+        args.seed + 20_000,
+        task_variant=args.task_variant,
+    )
     final_eval.timesteps = int(args.total_timesteps)
 
     summary = {
@@ -86,11 +129,16 @@ def main() -> None:
         "clip_range": args.clip_range,
         "ent_coef": args.ent_coef,
         "vf_coef": args.vf_coef,
+        "log_std_init": args.log_std_init,
+        "bc_kl_coef": args.bc_kl_coef,
+        "task_variant": args.task_variant,
+        "freeze_actor_steps": args.freeze_actor_steps,
+        "freeze_actor_mode": args.freeze_actor_mode,
         "bc_checkpoint": str(args.bc_checkpoint),
         "initialization": init_info,
         "final_model_path": str(final_model_path),
-        "best_model_path": str(callback.best_model_path),
-        "eval_history_path": str(callback.history_path),
+        "best_model_path": str(eval_callback.best_model_path),
+        "eval_history_path": str(eval_callback.history_path),
         "final_eval": asdict(final_eval),
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

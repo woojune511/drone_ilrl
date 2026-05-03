@@ -12,8 +12,8 @@ import torch
 from stable_baselines3 import PPO
 
 from ilrl_lab.bc import load_bc_checkpoint, predict_action
-from ilrl_lab.envs import WaypointVelocityAviary
-from ilrl_lab.experts import waypoint_velocity_expert
+from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +29,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--trajectory-seed", type=int, default=123)
     parser.add_argument(
+        "--task-variant",
+        choices=["waypoint", "detour"],
+        default="waypoint",
+        help="Environment/expert variant used for trajectory rollouts.",
+    )
+    parser.add_argument(
         "--total-timesteps-filter",
         type=int,
         default=None,
@@ -40,6 +46,22 @@ def parse_args() -> argparse.Namespace:
         help="Keep only the latest run for each seed when aggregating results.",
     )
     return parser.parse_args()
+
+
+def make_env(task_variant: str):
+    if task_variant == "detour":
+        return DetourWaypointVelocityAviary(gui=False)
+    if task_variant == "waypoint":
+        return WaypointVelocityAviary(gui=False)
+    raise ValueError(f"Unsupported task variant: {task_variant}")
+
+
+def expert_policy(task_variant: str):
+    if task_variant == "detour":
+        return detour_waypoint_velocity_expert
+    if task_variant == "waypoint":
+        return waypoint_velocity_expert
+    raise ValueError(f"Unsupported task variant: {task_variant}")
 
 
 def discover_runs(root: Path, total_timesteps_filter: int | None, dedupe_by_seed: bool) -> list[dict]:
@@ -146,15 +168,16 @@ def plot_metric(output_path: Path, scratch: dict, bc_init: dict, key_mean: str, 
     plt.close()
 
 
-def rollout_expert(seed: int) -> dict:
-    env = WaypointVelocityAviary(gui=False)
+def rollout_expert(seed: int, task_variant: str) -> dict:
+    env = make_env(task_variant)
+    policy = expert_policy(task_variant)
     obs, info = env.reset(seed=seed)
     goal = np.asarray(info["goal"], dtype=np.float32)
     positions = [np.asarray(info["position"], dtype=np.float32)]
     episode_return = 0.0
     steps = 0
     while True:
-        action = waypoint_velocity_expert(obs)
+        action = policy(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         positions.append(np.asarray(info["position"], dtype=np.float32))
         episode_return += float(reward)
@@ -171,10 +194,10 @@ def rollout_expert(seed: int) -> dict:
             }
 
 
-def rollout_bc(checkpoint: Path, seed: int) -> dict:
+def rollout_bc(checkpoint: Path, seed: int, task_variant: str) -> dict:
     device = torch.device("cpu")
     model, obs_mean, obs_std, _ = load_bc_checkpoint(checkpoint, device)
-    env = WaypointVelocityAviary(gui=False)
+    env = make_env(task_variant)
     obs, info = env.reset(seed=seed)
     goal = np.asarray(info["goal"], dtype=np.float32)
     positions = [np.asarray(info["position"], dtype=np.float32)]
@@ -198,8 +221,8 @@ def rollout_bc(checkpoint: Path, seed: int) -> dict:
             }
 
 
-def rollout_ppo(model_path: Path, seed: int, label: str) -> dict:
-    env = WaypointVelocityAviary(gui=False)
+def rollout_ppo(model_path: Path, seed: int, label: str, task_variant: str) -> dict:
+    env = make_env(task_variant)
     model = PPO.load(model_path)
     obs, info = env.reset(seed=seed)
     goal = np.asarray(info["goal"], dtype=np.float32)
@@ -300,10 +323,10 @@ def main() -> None:
     scratch_best = Path(scratch_runs[0]["best_model_path"])
     bc_init_best = Path(bc_init_runs[0]["best_model_path"])
     rollouts = [
-        rollout_expert(args.trajectory_seed),
-        rollout_bc(args.bc_checkpoint, args.trajectory_seed),
-        rollout_ppo(scratch_best, args.trajectory_seed, "PPO scratch"),
-        rollout_ppo(bc_init_best, args.trajectory_seed, "BC + PPO"),
+        rollout_expert(args.trajectory_seed, args.task_variant),
+        rollout_bc(args.bc_checkpoint, args.trajectory_seed, args.task_variant),
+        rollout_ppo(scratch_best, args.trajectory_seed, "PPO scratch", args.task_variant),
+        rollout_ppo(bc_init_best, args.trajectory_seed, "BC + PPO", args.task_variant),
     ]
     (args.output_dir / "trajectory_rollouts.json").write_text(json.dumps(rollouts, indent=2), encoding="utf-8")
     plot_trajectories(args.output_dir / "trajectory_comparison.png", rollouts)

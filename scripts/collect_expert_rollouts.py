@@ -7,8 +7,16 @@ from pathlib import Path
 
 import numpy as np
 
-from ilrl_lab.envs import WaypointVelocityAviary
-from ilrl_lab.experts import waypoint_velocity_expert
+from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
+
+
+def build_env_and_expert(task_variant: str, gui: bool):
+    if task_variant == "detour":
+        return DetourWaypointVelocityAviary(gui=gui), detour_waypoint_velocity_expert
+    if task_variant == "waypoint":
+        return WaypointVelocityAviary(gui=gui), waypoint_velocity_expert
+    raise ValueError(f"Unsupported task variant: {task_variant}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -18,6 +26,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--episodes", type=int, default=50, help="Number of episodes to collect.")
     parser.add_argument("--seed", type=int, default=7, help="Base random seed.")
     parser.add_argument("--gui", action="store_true", help="Run PyBullet with GUI enabled.")
+    parser.add_argument(
+        "--task-variant",
+        choices=["waypoint", "detour"],
+        default="waypoint",
+        help="Task variant and matching expert to use for collection.",
+    )
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -37,7 +51,7 @@ def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    env = WaypointVelocityAviary(gui=args.gui)
+    env, expert_policy = build_env_and_expert(args.task_variant, args.gui)
 
     obs_buffer: list[np.ndarray] = []
     act_buffer: list[np.ndarray] = []
@@ -62,7 +76,7 @@ def main() -> None:
         episode_goals.append(np.asarray(info["goal"], dtype=np.float32))
 
         while True:
-            action = waypoint_velocity_expert(obs)
+            action = expert_policy(obs)
             next_obs, reward, terminated, truncated, info = env.step(action)
 
             obs_buffer.append(obs.astype(np.float32))
@@ -94,7 +108,7 @@ def main() -> None:
     env.close()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    stem = f"waypoint_expert_{timestamp}"
+    stem = f"{args.task_variant}_expert_{timestamp}"
     dataset_path = args.output_dir / f"{stem}.npz"
     summary_path = args.output_dir / f"{stem}_summary.json"
 
@@ -129,6 +143,7 @@ def main() -> None:
         "mean_episode_length": mean_length,
         "mean_final_distance": mean_final_distance,
         "seed": args.seed,
+        "task_variant": args.task_variant,
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 

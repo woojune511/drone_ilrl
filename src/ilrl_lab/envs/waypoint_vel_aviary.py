@@ -47,6 +47,11 @@ class WaypointVelocityAviary(BaseRLAviary):
         goal_tolerance: float = 0.10,
         success_speed_threshold: float = 0.15,
         min_goal_distance: float = 0.35,
+        progress_reward_scale: float = 0.75,
+        near_goal_radius_multiplier: float = 2.0,
+        near_goal_position_bonus: float = 0.2,
+        near_goal_speed_penalty: float = 0.1,
+        near_goal_settle_bonus: float = 0.2,
         target_pos: np.ndarray | None = None,
         initial_xyzs: np.ndarray | None = None,
     ) -> None:
@@ -55,6 +60,12 @@ class WaypointVelocityAviary(BaseRLAviary):
         self.goal_tolerance = float(goal_tolerance)
         self.success_speed_threshold = float(success_speed_threshold)
         self.min_goal_distance = float(min_goal_distance)
+        self.progress_reward_scale = float(progress_reward_scale)
+        self.near_goal_radius_multiplier = float(near_goal_radius_multiplier)
+        self.near_goal_position_bonus = float(near_goal_position_bonus)
+        self.near_goal_speed_penalty = float(near_goal_speed_penalty)
+        self.near_goal_settle_bonus = float(near_goal_settle_bonus)
+        self._prev_distance_to_goal: float | None = None
 
         self._rng = np.random.default_rng()
         self._fixed_target_pos = None if target_pos is None else np.asarray(target_pos, dtype=np.float32)
@@ -89,6 +100,7 @@ class WaypointVelocityAviary(BaseRLAviary):
             self._rng = np.random.default_rng(seed)
         self._sample_start_and_goal()
         obs, info = super().reset(seed=seed, options=options)
+        self._prev_distance_to_goal = float(np.linalg.norm(self.target_pos - obs[0:3]))
         return obs, {**info, **self._build_info(success=False)}
 
     def step(self, action):
@@ -96,6 +108,7 @@ class WaypointVelocityAviary(BaseRLAviary):
         action = np.clip(action, self.action_space.low, self.action_space.high)
         obs, reward, terminated, truncated, info = super().step(action[np.newaxis, :])
         info = {**info, **self._build_info(success=bool(terminated))}
+        self._prev_distance_to_goal = float(info["distance_to_goal"])
         return obs, reward, terminated, truncated, info
 
     def _actionSpace(self):
@@ -127,6 +140,20 @@ class WaypointVelocityAviary(BaseRLAviary):
         distance = np.linalg.norm(self.target_pos - state[0:3])
         speed = np.linalg.norm(state[10:13])
         reward = 1.0 - np.tanh(2.0 * distance) - 0.02 * speed
+
+        if self._prev_distance_to_goal is not None:
+            progress = self._prev_distance_to_goal - float(distance)
+            reward += self.progress_reward_scale * progress
+
+        near_goal_radius = self.goal_tolerance * self.near_goal_radius_multiplier
+        if distance < near_goal_radius:
+            proximity = 1.0 - float(distance / near_goal_radius)
+            reward += self.near_goal_position_bonus * proximity
+            reward -= self.near_goal_speed_penalty * proximity * float(speed)
+            if speed < self.success_speed_threshold:
+                speed_ratio = 1.0 - float(speed / self.success_speed_threshold)
+                reward += self.near_goal_settle_bonus * proximity * max(speed_ratio, 0.0)
+
         if distance < self.goal_tolerance and speed < self.success_speed_threshold:
             reward += 2.0
         return float(reward)

@@ -34,17 +34,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clip-range", type=float, default=0.2)
     parser.add_argument("--ent-coef", type=float, default=0.0)
     parser.add_argument("--vf-coef", type=float, default=0.5)
+    parser.add_argument(
+        "--log-std-init",
+        type=float,
+        default=0.0,
+        help="Initial log standard deviation for the PPO Gaussian policy.",
+    )
     parser.add_argument("--gui", action="store_true", help="Enable GUI for the training environment.")
+    parser.add_argument(
+        "--task-variant",
+        choices=["waypoint", "detour"],
+        default="waypoint",
+        help="Environment variant to train on.",
+    )
     return parser.parse_args()
 
 def main() -> None:
     args = parse_args()
-    run_name = datetime.now().strftime("ppo_%Y%m%d_%H%M%S")
-    run_dir = args.output_dir / run_name
+    run_name = datetime.now().strftime(f"ppo_seed{args.seed}_%Y%m%d_%H%M%S")
+    run_dir = args.output_dir / args.task_variant / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     args.run_dir = run_dir
 
-    env = build_training_env(gui=args.gui, seed=args.seed)
+    env = build_training_env(gui=args.gui, seed=args.seed, task_variant=args.task_variant)
     model = build_ppo_model(env, args.seed, args)
 
     callback = PeriodicEvalCallback(
@@ -52,13 +64,19 @@ def main() -> None:
         eval_episodes=args.eval_episodes,
         eval_seed=args.seed + 10_000,
         run_dir=run_dir,
+        task_variant=args.task_variant,
     )
 
     model.learn(total_timesteps=args.total_timesteps, callback=callback, progress_bar=False)
     final_model_path = run_dir / "final_model.zip"
     model.save(final_model_path)
 
-    final_eval, _ = evaluate_model(model, args.eval_episodes, args.seed + 20_000)
+    final_eval, _ = evaluate_model(
+        model,
+        args.eval_episodes,
+        args.seed + 20_000,
+        task_variant=args.task_variant,
+    )
     final_eval.timesteps = int(args.total_timesteps)
 
     summary = {
@@ -75,6 +93,8 @@ def main() -> None:
         "clip_range": args.clip_range,
         "ent_coef": args.ent_coef,
         "vf_coef": args.vf_coef,
+        "log_std_init": args.log_std_init,
+        "task_variant": args.task_variant,
         "final_model_path": str(final_model_path),
         "best_model_path": str(callback.best_model_path),
         "eval_history_path": str(callback.history_path),

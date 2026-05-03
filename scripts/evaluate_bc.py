@@ -9,7 +9,15 @@ import numpy as np
 import torch
 
 from ilrl_lab.bc import load_bc_checkpoint, predict_action
-from ilrl_lab.envs import WaypointVelocityAviary
+from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
+
+
+def make_env(task_variant: str, gui: bool):
+    if task_variant == "detour":
+        return DetourWaypointVelocityAviary(gui=gui)
+    if task_variant == "waypoint":
+        return WaypointVelocityAviary(gui=gui)
+    raise ValueError(f"Unsupported task variant: {task_variant}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,6 +43,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--seed", type=int, default=100)
     parser.add_argument("--gui", action="store_true")
+    parser.add_argument(
+        "--task-variant",
+        choices=["waypoint", "detour"],
+        default="waypoint",
+        help="Environment variant to evaluate on.",
+    )
     return parser.parse_args()
 
 
@@ -52,7 +66,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, obs_mean, obs_std, metadata = load_bc_checkpoint(checkpoint_path, device)
 
-    env = WaypointVelocityAviary(gui=args.gui)
+    env = make_env(args.task_variant, gui=args.gui)
     episode_returns: list[float] = []
     episode_lengths: list[int] = []
     episode_successes: list[bool] = []
@@ -81,6 +95,7 @@ def main() -> None:
     summary = {
         "checkpoint_path": str(checkpoint_path),
         "dataset_path": metadata.get("dataset_path"),
+        "task_variant": args.task_variant,
         "episodes": args.episodes,
         "success_rate": float(np.mean(episode_successes)) if episode_successes else 0.0,
         "mean_episode_return": float(np.mean(episode_returns)) if episode_returns else 0.0,

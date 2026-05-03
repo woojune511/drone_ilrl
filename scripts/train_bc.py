@@ -28,6 +28,12 @@ def parse_args() -> argparse.Namespace:
         help="Directory used when --dataset is omitted.",
     )
     parser.add_argument(
+        "--dataset-glob",
+        type=str,
+        default="*_expert_*.npz",
+        help="Glob pattern used inside --dataset-dir when --dataset is omitted.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("artifacts") / "checkpoints" / "bc",
@@ -43,17 +49,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def latest_dataset(dataset_dir: Path) -> Path:
+def latest_dataset(dataset_dir: Path, dataset_glob: str) -> Path:
     candidates = sorted(
-        [
-            path
-            for path in dataset_dir.glob("waypoint_expert_*.npz")
-            if not path.name.endswith("_summary.npz")
-        ],
+        [path for path in dataset_dir.glob(dataset_glob) if not path.name.endswith("_summary.npz")],
         key=lambda path: path.stat().st_mtime,
     )
     if not candidates:
-        raise FileNotFoundError(f"No expert dataset found under {dataset_dir}")
+        raise FileNotFoundError(f"No expert dataset found under {dataset_dir} matching {dataset_glob}")
     return candidates[-1]
 
 
@@ -98,7 +100,7 @@ def evaluate(model: BehaviorCloningPolicy, loader: DataLoader, loss_fn: nn.Modul
 
 def main() -> None:
     args = parse_args()
-    dataset_path = args.dataset if args.dataset is not None else latest_dataset(args.dataset_dir)
+    dataset_path = args.dataset if args.dataset is not None else latest_dataset(args.dataset_dir, args.dataset_glob)
     data = np.load(dataset_path)
 
     obs = data["obs"].astype(np.float32)
@@ -176,6 +178,7 @@ def main() -> None:
 
     summary = {
         "dataset_path": str(dataset_path),
+        "dataset_glob": args.dataset_glob,
         "train_transitions": int(train_mask.sum()),
         "val_transitions": int(val_mask.sum()),
         "epochs": args.epochs,

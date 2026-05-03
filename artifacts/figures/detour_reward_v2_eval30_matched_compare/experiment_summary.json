@@ -1,0 +1,138 @@
+{
+  "scratch": {
+    "name": "ppo_scratch",
+    "num_runs": 2,
+    "aggregated_history": {
+      "50000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 24.641491799540347,
+        "return_std": 6.3075344512940905,
+        "distance_mean": 0.8198999248913456,
+        "distance_std": 0.0022206432384190844
+      },
+      "100000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 45.260623016408786,
+        "return_std": 5.384707737789643,
+        "distance_mean": 0.7794210034773763,
+        "distance_std": 0.0070523979724954056
+      },
+      "150000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 40.77589741827094,
+        "return_std": 4.72923183428891,
+        "distance_mean": 0.7417687814587697,
+        "distance_std": 0.01606224013719021
+      },
+      "200000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 45.58015996525243,
+        "return_std": 3.876626540132982,
+        "distance_mean": 0.7865336893524066,
+        "distance_std": 0.018201531987483865
+      },
+      "250000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 45.401552488013735,
+        "return_std": 12.550578485825756,
+        "distance_mean": 0.7480028056509713,
+        "distance_std": 0.010263136320589061
+      },
+      "300000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 33.262665026615565,
+        "return_std": 0.10827100772315035,
+        "distance_mean": 0.7518119943486068,
+        "distance_std": 0.05308618026176887
+      }
+    },
+    "final_success_mean": 0.0,
+    "final_success_std": 0.0,
+    "final_distance_mean": 0.7361461270496585,
+    "final_distance_std": 0.0348347311698754,
+    "final_return_mean": 36.99866796119072,
+    "final_return_std": 3.236690418362997,
+    "auc_success_mean": 0.0,
+    "auc_success_std": 0.0,
+    "steps_to_70_success_mean": null,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_scratch_detour_reward_v2_eval30\\ls_m05\\detour\\ppo_seed7_20260503_225217",
+      "artifacts\\checkpoints\\ppo_scratch_detour_reward_v2_eval30\\ls_m05\\detour\\ppo_seed11_20260503_225217"
+    ]
+  },
+  "bc_init": {
+    "name": "ppo_bc_init",
+    "num_runs": 2,
+    "aggregated_history": {
+      "50000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 16.909299392438673,
+        "return_std": 1.3172879699612983,
+        "distance_mean": 0.7787340335029702,
+        "distance_std": 0.035344881132751416
+      },
+      "100000": {
+        "success_mean": 0.03333333333333333,
+        "success_std": 0.03333333333333333,
+        "return_mean": 70.0587906923551,
+        "return_std": 2.0049689044993,
+        "distance_mean": 0.5905326938024174,
+        "distance_std": 0.03002433687524053
+      },
+      "150000": {
+        "success_mean": 0.016666666666666666,
+        "success_std": 0.016666666666666666,
+        "return_mean": 95.07823066537031,
+        "return_std": 23.99534026744793,
+        "distance_mean": 0.5284549328493822,
+        "distance_std": 0.10505918958681376
+      },
+      "200000": {
+        "success_mean": 0.13333333333333333,
+        "success_std": 0.13333333333333333,
+        "return_mean": 114.41275548329594,
+        "return_std": 11.55076994596746,
+        "distance_mean": 0.39779868414684594,
+        "distance_std": 0.0914109864140841
+      },
+      "250000": {
+        "success_mean": 0.11666666666666667,
+        "success_std": 0.08333333333333334,
+        "return_mean": 127.96604089454317,
+        "return_std": 13.174640478167738,
+        "distance_mean": 0.3707863817392834,
+        "distance_std": 0.09411803042680311
+      },
+      "300000": {
+        "success_mean": 0.2833333333333333,
+        "success_std": 0.15000000000000002,
+        "return_mean": 128.28001969884627,
+        "return_std": 10.497080346824326,
+        "distance_mean": 0.2898764455936831,
+        "distance_std": 0.025943048818105108
+      }
+    },
+    "final_success_mean": 0.41666666666666663,
+    "final_success_std": 0.08333333333333334,
+    "final_distance_mean": 0.31240844081022745,
+    "final_distance_std": 0.024240527573391596,
+    "final_return_mean": 108.2942181381733,
+    "final_return_std": 10.869555172735964,
+    "auc_success_mean": 22083.334228515625,
+    "auc_success_std": 17083.333740234375,
+    "steps_to_70_success_mean": null,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_bc_detour_reward_v2_eval30\\ls_m05\\detour\\ppo_bc_init_seed7_20260503_223144",
+      "artifacts\\checkpoints\\ppo_bc_detour_reward_v2_eval30\\ls_m05\\detour\\ppo_bc_init_seed11_20260503_223144"
+    ]
+  }
+}

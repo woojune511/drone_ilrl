@@ -17,6 +17,9 @@ artifacts/figures/*
 !artifacts/figures/ppo_vs_bc_init_300k/
 !artifacts/figures/ppo_vs_bc_init_300k/*.png
 !artifacts/figures/ppo_vs_bc_init_300k/*.json
+!artifacts/figures/detour_reward_v2_eval30_matched_compare/
+!artifacts/figures/detour_reward_v2_eval30_matched_compare/*.png
+!artifacts/figures/detour_reward_v2_eval30_matched_compare/*.json
 outputs/
 logs/
 tensorboard/

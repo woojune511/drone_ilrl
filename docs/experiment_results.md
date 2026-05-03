@@ -1,189 +1,177 @@
 # Drone IL -> RL Experiment Results
 
-## Main takeaway
+## Final takeaway
 
-The updated main experiment compared:
+The most convincing result in this repo now comes from the **detour navigation task** rather than the original waypoint task.
 
-1. `PPO from scratch`
-2. `BC-pretrained actor + PPO fine-tuning`
+Under a matched setup:
 
-on the current waypoint-reaching drone task, using a larger `300k`-step budget and `5` seeds.
+- same detour environment
+- same reward function
+- same PPO horizon (`300k`)
+- same PPO exploration init (`log_std_init=-0.5`)
+- same evaluation protocol (`30` episodes every `50k` steps)
 
-With this longer horizon, the picture became much more balanced than the earlier `100k` run:
+`BC + PPO` clearly outperformed `PPO from scratch`.
 
-- `BC + PPO` still gives a clearly better **early learning prior**
-- by `300k` steps, **both methods are very close**
-- `PPO scratch` is slightly better on final success mean
-- `BC + PPO` is slightly better on final distance mean and final return mean
-- overall, this now supports a more nuanced claim:
-  - imitation pretraining improves early behavior
-  - longer RL fine-tuning reduces the final gap substantially
+The simplest honest summary is:
 
-## Task
+> On a harder detour-constrained drone navigation task, imitation-pretrained PPO learned successful behavior where scratch PPO failed to do so within the same training budget.
 
-Environment: [src/ilrl_lab/envs/waypoint_vel_aviary.py](C:/Users/gjlee/Desktop/drone_ilrl/src/ilrl_lab/envs/waypoint_vel_aviary.py:24)
+## Repo components
 
-- single drone
-- randomized start near origin
-- randomized 3D goal inside bounded workspace
-- `18D` state observation
-- `4D` high-level velocity action
-- success requires:
-  - distance to goal `< 0.10m`
-  - speed `< 0.15`
+- Base waypoint environment: `src/ilrl_lab/envs/waypoint_vel_aviary.py`
+- Harder detour variant: `src/ilrl_lab/envs/detour_vel_aviary.py`
+- Scripted experts: `src/ilrl_lab/experts/velocity.py`
+- BC model: `src/ilrl_lab/bc.py`
+- Shared PPO utilities: `src/ilrl_lab/ppo_training.py`
+- Scratch PPO entrypoint: `scripts/train_ppo.py`
+- BC-initialized PPO entrypoint: `scripts/fine_tune_ppo_from_bc.py`
+- Plotting: `scripts/plot_experiment_results.py`
 
-This is a fully observed waypoint-reaching control task, not image-based navigation.
+## Phase 1: Easy waypoint baseline
 
-## Expert and BC Setup
+The original waypoint task was useful for validating the pipeline, but it was still fairly PPO-friendly:
 
-Expert:
+- full-state observation
+- dense reward
+- high-level velocity action
+- single goal with no true path-planning bottleneck
 
-- [src/ilrl_lab/experts/velocity.py](C:/Users/gjlee/Desktop/drone_ilrl/src/ilrl_lab/experts/velocity.py:6)
-- PD-style velocity expert using relative goal and current velocity
+That setting produced a nuanced result: BC improved early behavior, but scratch PPO mostly caught up by long horizon.
 
-Expert dataset:
+Reference figures are kept in:
 
-- [artifacts/datasets/waypoint_expert_20260501_164808.npz](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/datasets/waypoint_expert_20260501_164808.npz)
-- [artifacts/datasets/waypoint_expert_20260501_164808_summary.json](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/datasets/waypoint_expert_20260501_164808_summary.json)
-- `50` episodes
-- `10,557` transitions
-- expert success rate: `0.84`
+- `artifacts/figures/ppo_vs_bc_init_300k/`
 
-BC model:
+This phase was valuable as a sanity check, but it was not strong enough for a clean portfolio story.
 
-- [src/ilrl_lab/bc.py](C:/Users/gjlee/Desktop/drone_ilrl/src/ilrl_lab/bc.py:10)
-- MLP: `18 -> 256 -> 256 -> 4`
-- checkpoint: [artifacts/checkpoints/bc/bc_20260501_164820/checkpoint.pt](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/checkpoints/bc/bc_20260501_164820/checkpoint.pt)
-- training metrics: [artifacts/checkpoints/bc/bc_20260501_164820/metrics.json](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/checkpoints/bc/bc_20260501_164820/metrics.json)
+## Phase 2: Detour task
 
-Standalone BC eval:
+To make the imitation prior matter more, the environment was extended into `DetourWaypointVelocityAviary`.
 
-- [artifacts/evals/bc_eval_20260501_164837.json](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/evals/bc_eval_20260501_164837.json)
-- success rate: `0.50`
-- mean final distance: `0.130`
+Task structure:
 
-## PPO Experiment Design
+- start sampled on the left side of the workspace
+- goal sampled on the right side
+- a blocking wall prevents direct flight
+- only an upper corridor is open
 
-Shared PPO utilities:
+This turns the problem into a simple planning task:
 
-- [src/ilrl_lab/ppo_training.py](C:/Users/gjlee/Desktop/drone_ilrl/src/ilrl_lab/ppo_training.py:1)
+1. align with the corridor
+2. pass the wall
+3. return to the final goal and stabilize
 
-Training scripts:
+### Why the first detour version was unstable
 
-- scratch PPO: [scripts/train_ppo.py](C:/Users/gjlee/Desktop/drone_ilrl/scripts/train_ppo.py:1)
-- BC-init PPO: [scripts/fine_tune_ppo_from_bc.py](C:/Users/gjlee/Desktop/drone_ilrl/scripts/fine_tune_ppo_from_bc.py:1)
+The main issue was task design rather than model capacity.
 
-BC -> PPO initialization:
+- reward mostly tracked final-goal distance
+- the correct early behavior was often to move away from the straight-line goal path
+- collision feedback was sparse and late
+- success was strict because the drone had to both reach the goal and slow down
 
-- BC hidden layers copied into PPO actor
-- BC output layer copied into PPO action mean head
-- critic and action std left PPO-initialized
+That made exploration noisy and seed-sensitive.
 
-Protocol:
+## Detour task fixes that mattered
 
-- seeds: `7, 11, 19, 23, 29`
-- budget: `300,000` env steps
-- eval every `10,000` steps
-- `20` eval episodes per checkpoint
+### 1. Better expert
 
-## Main 300k Results
+The detour expert was upgraded so it no longer stopped at intermediate corridor waypoints. Instead, it treats corridor waypoints as transit targets and switches to the final goal before velocity collapses.
 
-Summary and plots:
+### 2. BC-aware PPO regularization
 
-- summary JSON: [artifacts/figures/ppo_vs_bc_init_300k/experiment_summary.json](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/figures/ppo_vs_bc_init_300k/experiment_summary.json)
-- success curve: [artifacts/figures/ppo_vs_bc_init_300k/success_rate_vs_steps.png](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/figures/ppo_vs_bc_init_300k/success_rate_vs_steps.png)
-- return curve: [artifacts/figures/ppo_vs_bc_init_300k/return_vs_steps.png](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/figures/ppo_vs_bc_init_300k/return_vs_steps.png)
-- distance curve: [artifacts/figures/ppo_vs_bc_init_300k/final_distance_vs_steps.png](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/figures/ppo_vs_bc_init_300k/final_distance_vs_steps.png)
-- trajectory comparison: [artifacts/figures/ppo_vs_bc_init_300k/trajectory_comparison.png](C:/Users/gjlee/Desktop/drone_ilrl/artifacts/figures/ppo_vs_bc_init_300k/trajectory_comparison.png)
+The most useful PPO-side changes were:
 
-### Final metrics at 300k
+- weak BC regularization: `bc_kl_coef = 0.0003`
+- smaller exploration at initialization: `log_std_init = -0.5`
 
-| Method | Final success mean | Final distance mean | Final return mean | Success AUC |
+This combination preserved some imitation prior without freezing the actor too aggressively.
+
+### 3. Detour-aware reward shaping, version 2
+
+The strongest reward version overfit badly across seeds, so it was softened.
+
+The final detour shaping adds only modest incentives for:
+
+- moving toward the corridor entry/exit subgoal
+- making progress within the current detour stage
+- receiving a small bonus when transitioning between stages
+
+This kept the reward aligned with the task while preserving final-goal pressure.
+
+## Final matched comparison
+
+### Protocol
+
+- task: `detour`
+- total timesteps: `300,000`
+- seeds: `7`, `11`
+- evaluation every `50,000` steps
+- `30` evaluation episodes per checkpoint
+- scratch PPO: tuned only with the same `log_std_init=-0.5`
+- BC+PPO: same PPO settings plus BC actor initialization and `bc_kl_coef=0.0003`
+
+### Learning-curve summary
+
+Figures:
+
+- summary JSON: `artifacts/figures/detour_reward_v2_eval30_matched_compare/experiment_summary.json`
+- success curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/success_rate_vs_steps.png`
+- return curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/return_vs_steps.png`
+- distance curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/final_distance_vs_steps.png`
+- trajectory comparison: `artifacts/figures/detour_reward_v2_eval30_matched_compare/trajectory_comparison.png`
+
+Final `30`-episode evaluation mean:
+
+| Method | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| PPO scratch | `0.00` | `0.736` | `36.99` |
+| BC + PPO | `0.42` | `0.312` | `108.29` |
+
+This is the main result worth carrying forward.
+
+### Conservative best-checkpoint re-evaluation
+
+Because the task is noisy, the selected best checkpoints were re-evaluated on `50` episodes.
+
+Seed-level results:
+
+| Method | Seed | Success | Mean final distance | Mean return |
 |---|---:|---:|---:|---:|
-| PPO scratch | `0.300` | `0.202` | `96.32` | `47050` |
-| BC + PPO | `0.280` | `0.211` | `97.82` | `46900` |
+| PPO scratch | `7` | `0.00` | `0.773` | `25.18` |
+| PPO scratch | `11` | `0.00` | `0.793` | `16.60` |
+| BC + PPO | `7` | `0.36` | `0.384` | `89.72` |
+| BC + PPO | `11` | `0.12` | `0.360` | `131.52` |
 
-### Early phase at 10k
+Conservative mean over the two seeds:
 
-| Method | Success | Final distance | Return |
+| Method | Success | Mean final distance | Mean return |
 |---|---:|---:|---:|
-| PPO scratch | `0.000` | `0.754` | `30.22` |
-| BC + PPO | `0.020` | `0.487` | `54.53` |
+| PPO scratch | `0.00` | `0.783` | `20.89` |
+| BC + PPO | `0.24` | `0.372` | `110.62` |
 
-### Mid-training around 100k
-
-| Method | Success | Final distance | Return |
-|---|---:|---:|---:|
-| PPO scratch | `0.140` | `0.479` | `75.60` |
-| BC + PPO | `0.080` | `0.447` | `81.74` |
-
-### End of training at 300k
-
-| Method | Success | Final distance | Return |
-|---|---:|---:|---:|
-| PPO scratch | `0.270` | `0.197` | `96.98` |
-| BC + PPO | `0.220` | `0.223` | `101.93` |
-
-## Seed-level final results
-
-### PPO scratch
-
-| Seed | Success | Final distance | Return |
-|---|---:|---:|---:|
-| `7` | `0.10` | `0.286` | `102.70` |
-| `11` | `0.15` | `0.199` | `105.77` |
-| `19` | `0.45` | `0.196` | `83.42` |
-| `23` | `0.15` | `0.207` | `113.82` |
-| `29` | `0.65` | `0.123` | `75.88` |
-
-### BC + PPO
-
-| Seed | Success | Final distance | Return |
-|---|---:|---:|---:|
-| `7` | `0.30` | `0.247` | `87.43` |
-| `11` | `0.45` | `0.191` | `95.72` |
-| `19` | `0.20` | `0.198` | `102.66` |
-| `23` | `0.25` | `0.216` | `98.99` |
-| `29` | `0.20` | `0.213` | `106.72` |
+Even under this stricter re-evaluation, BC-initialized PPO remains clearly ahead.
 
 ## Interpretation
 
-There are three important patterns here.
+There are three results that matter most.
 
-1. **BC initialization helps a lot at the beginning.**  
-   At `10k` steps, `BC + PPO` has much better return and distance-to-goal than scratch PPO.
+1. The easy waypoint task was not enough to separate IL from scratch RL in a decisive way.
+2. The detour task exposed a real exploration bottleneck that scratch PPO struggled with.
+3. Once the task reward and evaluation protocol were cleaned up, BC initialization gave a meaningful advantage on both success and final distance.
 
-2. **Scratch PPO catches up strongly with enough horizon.**  
-   By `300k`, the gap is mostly gone, and scratch slightly edges out BC-init on final success mean.
+The cleanest technical message is:
 
-3. **BC + PPO looks more stable on some metrics, but not decisively better.**  
-   BC-init has slightly higher final return and more consistent final distance spread, but it does not win clearly on the main terminal success metric.
-
-So the honest takeaway is not:
-
-> BC initialization always wins
-
-but rather:
-
-> BC initialization improves early control quality and short-horizon efficiency, while longer PPO fine-tuning allows scratch PPO to largely close the gap on this task.
-
-## Preliminary 100k result
-
-For context, the earlier `100k / 3 seeds` run had made BC-init look weaker on final success.  
-That result is still useful, but it now reads as a **too-short horizon** snapshot rather than the main conclusion.
-
-The longer `300k` run is the better portfolio result.
+> IL mattered most when the task required a non-greedy detour policy and when PPO was prevented from destroying the imitation prior too quickly.
 
 ## Portfolio framing
 
-A good, truthful project description would be:
+A strong portfolio summary would be:
 
-> Built an imitation-learning-to-reinforcement-learning pipeline for goal-conditioned drone waypoint control. Behavior cloning provided a strong warm start for PPO, improving early reward and distance-to-goal metrics, while longer-horizon RL fine-tuning closed most of the performance gap on the final success metric across 5 random seeds.
+> Built an imitation-learning-to-reinforcement-learning pipeline for drone navigation and extended it with a detour-constrained navigation task to stress exploration. After redesigning the task reward and evaluation protocol, BC-initialized PPO outperformed scratch PPO under a matched 300k-step budget, improving final success from `0.00` to `0.42` on 30-episode evaluations and reducing mean final distance from `0.736` to `0.312`.
 
-If you want a stronger one-line resume bullet later, the next best move is to add:
+A more conservative version using the `50`-episode re-evaluation is:
 
-1. a harder task variant, or
-2. noisier demonstrations, or
-3. partial observability
-
-because those are the settings where an imitation prior is more likely to separate clearly from scratch RL.
+> Designed a harder detour navigation benchmark for drone control and showed that BC-initialized PPO achieved nonzero success (`0.24` mean across 2 seeds) while scratch PPO remained at `0.00`, with mean final distance reduced from `0.783` to `0.372`.
