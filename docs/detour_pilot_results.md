@@ -69,7 +69,7 @@ The strongest detour setting so far is:
 
 ## Why this setting matters
 
-Under that matched setup, scratch PPO stayed at `0.00` success on both retained seeds, while BC-initialized PPO achieved nonzero success and much lower final distance.
+Under the final matched `3`-seed setup, scratch PPO stayed at `0.00` mean success, while BC-initialized PPO reached `0.30` mean success on the online `30`-episode evaluations and `0.27` mean success on the stricter `50`-episode best-checkpoint re-evaluations.
 
 The final comparison figures are in:
 

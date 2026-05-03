@@ -1,18 +1,59 @@
 # ILRL Drone Lab
 
-This workspace is set up for rebuilding your old drone imitation-learning project in a lighter stack:
+This repo is a compact drone navigation lab for testing whether imitation learning can make downstream reinforcement learning more sample-efficient.
 
-- `uv` for environment and dependency management
-- `gym-pybullet-drones` for the drone simulator
-- `stable-baselines3` for PPO and related RL baselines
-- `imitation` for BC / GAIL style imitation-learning experiments
+The current headline result comes from a harder **detour navigation task**: under a matched `300k`-step budget, `BC + PPO` outperformed `PPO from scratch` on success rate, return, and final goal distance.
 
-The drone simulator is wired through a local editable checkout in `vendor/gym-pybullet-drones-main/`, so `uv sync` does not depend on a fragile Git-tag wheel build path.
-On Windows, the environment uses `pybullet-arm64` as a drop-in replacement for `pybullet`, because the current `pybullet` release on PyPI does not ship a Windows wheel for this setup and otherwise falls back to a local C++ build.
+## Current Result
 
-## Why Python 3.10?
+Final matched comparison:
 
-The current `gym-pybullet-drones` project declares `python = "^3.10"` in its project metadata, and the official repository installation example also uses Python 3.10. Pinning to 3.10 keeps the environment conservative and avoids wasting time on package compatibility issues before the experiments even start.
+- task: `DetourWaypointVelocityAviary`
+- timesteps: `300,000`
+- seeds: `7, 11, 19`
+- evaluation: `30` episodes every `50k`
+- exploration init: `log_std_init=-0.5`
+- BC regularization: `bc_kl_coef=0.0003`
+
+Final `30`-episode evaluation mean:
+
+| Method | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| PPO scratch | `0.00` | `0.741` | `37.01` |
+| BC + PPO | `0.30` | `0.307` | `124.25` |
+
+Best-checkpoint `50`-episode re-evaluation mean:
+
+| Method | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| PPO scratch | `0.00` | `0.775` | `22.64` |
+| BC + PPO | `0.27` | `0.406` | `91.16` |
+
+Main figures:
+
+- `artifacts/figures/detour_reward_v2_eval30_matched_compare/success_rate_vs_steps.png`
+- `artifacts/figures/detour_reward_v2_eval30_matched_compare/final_distance_vs_steps.png`
+- `artifacts/figures/detour_reward_v2_eval30_matched_compare/trajectory_comparison.png`
+- `artifacts/figures/detour_reward_v2_eval30_matched_compare/portfolio_overview.png`
+
+Detailed write-up:
+
+- `docs/experiment_results.md`
+- `docs/portfolio_summary.md`
+
+## Repo Structure
+
+- `src/ilrl_lab/envs/waypoint_vel_aviary.py`: base waypoint-reaching task
+- `src/ilrl_lab/envs/detour_vel_aviary.py`: harder detour-constrained task
+- `src/ilrl_lab/experts/velocity.py`: waypoint and detour scripted experts
+- `src/ilrl_lab/bc.py`: behavior cloning policy
+- `src/ilrl_lab/ppo_training.py`: PPO helpers, BC actor init, weak BC regularization
+- `scripts/collect_expert_rollouts.py`: expert data collection
+- `scripts/train_bc.py`: BC training
+- `scripts/evaluate_bc.py`: BC evaluation
+- `scripts/train_ppo.py`: scratch PPO training
+- `scripts/fine_tune_ppo_from_bc.py`: BC-initialized PPO fine-tuning
+- `scripts/plot_experiment_results.py`: comparison plots
 
 ## Quickstart
 
@@ -23,94 +64,80 @@ Set-ExecutionPolicy -Scope Process Bypass
 .\scripts\bootstrap.ps1
 ```
 
-This script:
-
-- uses a project-local `.uv-cache` to avoid permission issues with the default global uv cache
-- uses a project-local `.uv-python` directory for uv-managed Python installations
-- installs Python 3.10 via `uv` if needed
-- creates `.venv`
-- syncs dependencies for `drones`, `il`, and `dev`
-- runs a smoke test
-
-### 2. Activate the virtual environment manually
+### 2. Activate the environment
 
 ```powershell
 . .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Re-run the smoke test
+### 3. Smoke test
 
 ```powershell
 uv run python scripts/check_env.py
+pytest tests/test_waypoint_env.py -q
 ```
 
-## Manual uv commands
+## Reproducing the Pipeline
 
-If you want to run the steps manually instead of using the bootstrap script:
+### Collect expert rollouts
+
+Waypoint:
 
 ```powershell
-$env:UV_CACHE_DIR = "$PWD\\.uv-cache"
-$env:UV_PYTHON_INSTALL_DIR = "$PWD\\.uv-python"
-uv python install 3.10
-uv venv --python 3.10
-uv sync --extra drones --extra il --extra dev
-uv run python scripts/check_env.py
+python scripts/collect_expert_rollouts.py --episodes 50 --task-variant waypoint
 ```
 
-## Project Layout
-
-```text
-.
-├── pyproject.toml
-├── README.md
-├── scripts/
-│   ├── bootstrap.ps1
-│   └── check_env.py
-├── vendor/
-│   └── gym-pybullet-drones-main/
-├── src/
-│   └── ilrl_lab/
-└── tests/
-```
-
-## Suggested Next Build Steps
-
-1. Add an expert trajectory collector using the simulator's PID control examples as the starting point.
-2. Train a BC baseline and log success rate / trajectory RMSE.
-3. Fine-tune the BC checkpoint with PPO and compare convergence speed and final performance.
-4. Add a reproducible evaluation script that dumps metrics to `artifacts/`.
-
-## Expert Rollout Collection
-
-The workspace now includes a minimal waypoint task and an automatic expert collector:
+Detour:
 
 ```powershell
-. .\.venv\Scripts\Activate.ps1
-python scripts\collect_expert_rollouts.py --episodes 50
+python scripts/collect_expert_rollouts.py --episodes 50 --task-variant detour
 ```
 
-This uses:
-
-- `src/ilrl_lab/envs/waypoint_vel_aviary.py` for a single-drone, goal-aware waypoint task
-- `src/ilrl_lab/experts/velocity.py` for a simple expert that outputs velocity commands
-- the simulator's built-in PID controller to translate high-level velocity commands into motor control
-
-The collector saves:
-
-- compressed transition data to `artifacts/datasets/*.npz`
-- a run summary to `artifacts/datasets/*_summary.json`
-
-## Behavior Cloning Baseline
-
-Train the BC policy on the latest collected dataset:
+### Train behavior cloning
 
 ```powershell
-. .\.venv\Scripts\Activate.ps1
-python scripts\train_bc.py --epochs 15
+python scripts/train_bc.py --epochs 15 --task-variant detour
 ```
 
-Evaluate the latest BC checkpoint in the environment:
+### Evaluate BC
 
 ```powershell
-python scripts\evaluate_bc.py --episodes 20
+python scripts/evaluate_bc.py --episodes 20 --task-variant detour
 ```
+
+### Train scratch PPO
+
+```powershell
+python scripts/train_ppo.py --task-variant detour --total-timesteps 300000 --eval-episodes 30 --log-std-init -0.5
+```
+
+### Fine-tune PPO from BC
+
+```powershell
+python scripts/fine_tune_ppo_from_bc.py --task-variant detour --total-timesteps 300000 --eval-episodes 30 --log-std-init -0.5 --bc-kl-coef 0.0003
+```
+
+## Why the Detour Task Matters
+
+The original waypoint task was useful for validating the pipeline, but it was still fairly PPO-friendly:
+
+- full-state observation
+- dense reward
+- high-level velocity action
+- no real path-planning bottleneck
+
+The detour task adds:
+
+- left-to-right start/goal structure
+- a blocking wall
+- a single open corridor
+- collision-aware truncation
+- modest detour-stage reward shaping
+
+That turns the problem into a non-greedy navigation task where imitation pretraining matters much more.
+
+## Notes
+
+- Python is pinned to `3.10` for compatibility with `gym-pybullet-drones`
+- `vendor/gym-pybullet-drones-main/` is used as a local editable dependency
+- On Windows, the setup uses `pybullet-arm64` as a practical replacement for `pybullet`
