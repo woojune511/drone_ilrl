@@ -15,6 +15,7 @@ class BehaviorCloningPolicy(nn.Module):
         obs_dim: int,
         action_dim: int,
         hidden_sizes: tuple[int, ...] = (256, 256),
+        squash_output: bool = False,
     ) -> None:
         super().__init__()
         layers: list[nn.Module] = []
@@ -24,8 +25,10 @@ class BehaviorCloningPolicy(nn.Module):
             layers.append(nn.ReLU())
             in_dim = hidden_dim
         layers.append(nn.Linear(in_dim, action_dim))
-        layers.append(nn.Tanh())
+        if squash_output:
+            layers.append(nn.Tanh())
         self.network = nn.Sequential(*layers)
+        self.squash_output = bool(squash_output)
 
     def forward(self, obs: torch.Tensor) -> torch.Tensor:
         return self.network(obs)
@@ -74,10 +77,11 @@ def load_bc_checkpoint(
     payload = torch.load(path, map_location=device, weights_only=False)
     metadata = payload["metadata"]
     model = BehaviorCloningPolicy(
-        obs_dim=int(metadata["obs_dim"]),
-        action_dim=int(metadata["action_dim"]),
-        hidden_sizes=tuple(int(x) for x in metadata["hidden_sizes"]),
-    )
+            obs_dim=int(metadata["obs_dim"]),
+            action_dim=int(metadata["action_dim"]),
+            hidden_sizes=tuple(int(x) for x in metadata["hidden_sizes"]),
+            squash_output=bool(metadata.get("squash_output", True)),
+        )
     model.load_state_dict(payload["model_state_dict"])
     model.to(device)
     model.eval()

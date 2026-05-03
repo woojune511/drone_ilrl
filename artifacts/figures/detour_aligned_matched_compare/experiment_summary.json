@@ -1,0 +1,140 @@
+{
+  "scratch": {
+    "name": "ppo_scratch",
+    "num_runs": 3,
+    "aggregated_history": {
+      "50000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 13.334655191996447,
+        "return_std": 1.9819515534439505,
+        "distance_mean": 1.1779542699066567,
+        "distance_std": 0.05616791182524725
+      },
+      "100000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 13.62253997633797,
+        "return_std": 6.965767329685398,
+        "distance_mean": 1.0621949261335877,
+        "distance_std": 0.1909996524768332
+      },
+      "150000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 13.485826028148894,
+        "return_std": 6.021747962147485,
+        "distance_mean": 0.9962066618439733,
+        "distance_std": 0.0930822897669872
+      },
+      "200000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 24.790604827861944,
+        "return_std": 5.840893210540998,
+        "distance_mean": 0.9021092985635143,
+        "distance_std": 0.02505034353322746
+      },
+      "250000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 27.311678354654816,
+        "return_std": 0.4757651294694872,
+        "distance_mean": 0.7785943311953781,
+        "distance_std": 0.07087206247100541
+      },
+      "300000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 23.210988494157007,
+        "return_std": 7.480500439599005,
+        "distance_mean": 0.7575433882171523,
+        "distance_std": 0.06133653332428045
+      }
+    },
+    "final_success_mean": 0.0,
+    "final_success_std": 0.0,
+    "final_distance_mean": 0.7322251867219108,
+    "final_distance_std": 0.030002369451257963,
+    "final_return_mean": 21.149559974268822,
+    "final_return_std": 6.797733745251004,
+    "auc_success_mean": 0.0,
+    "auc_success_std": 0.0,
+    "steps_to_70_success_mean": null,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_scratch_aligned\\detour\\ppo_seed7_20260504_022614",
+      "artifacts\\checkpoints\\ppo_scratch_aligned\\detour\\ppo_seed11_20260504_023625",
+      "artifacts\\checkpoints\\ppo_scratch_aligned\\detour\\ppo_seed19_20260504_024655"
+    ]
+  },
+  "bc_init": {
+    "name": "ppo_bc_init",
+    "num_runs": 3,
+    "aggregated_history": {
+      "50000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 15.17528727854188,
+        "return_std": 5.600197790371833,
+        "distance_mean": 0.8978169119136205,
+        "distance_std": 0.0688422422099566
+      },
+      "100000": {
+        "success_mean": 0.0,
+        "success_std": 0.0,
+        "return_mean": 39.735374479262006,
+        "return_std": 9.639904063583678,
+        "distance_mean": 0.6898332888476416,
+        "distance_std": 0.0949476032229449
+      },
+      "150000": {
+        "success_mean": 0.011111111111111112,
+        "success_std": 0.01571348402636772,
+        "return_mean": 56.94996136674411,
+        "return_std": 12.811478980733982,
+        "distance_mean": 0.5633768282867972,
+        "distance_std": 0.08539080029632663
+      },
+      "200000": {
+        "success_mean": 0.022222222222222223,
+        "success_std": 0.03142696805273544,
+        "return_mean": 70.70651897263822,
+        "return_std": 35.142350947660724,
+        "distance_mean": 0.5326281655265703,
+        "distance_std": 0.1307570053029698
+      },
+      "250000": {
+        "success_mean": 0.06666666666666667,
+        "success_std": 0.0,
+        "return_mean": 69.15604663455322,
+        "return_std": 37.295873674967154,
+        "distance_mean": 0.5569623849880957,
+        "distance_std": 0.13329487079325703
+      },
+      "300000": {
+        "success_mean": 0.06666666666666667,
+        "success_std": 0.027216552697590872,
+        "return_mean": 76.75361443561975,
+        "return_std": 17.13305678655437,
+        "distance_mean": 0.5157995791132254,
+        "distance_std": 0.054893038684709884
+      }
+    },
+    "final_success_mean": 0.1111111111111111,
+    "final_success_std": 0.07856742013183861,
+    "final_distance_mean": 0.4755659839713238,
+    "final_distance_std": 0.051712402308540566,
+    "final_return_mean": 81.828226826098,
+    "final_return_std": 15.914629603352056,
+    "auc_success_mean": 6666.6669921875,
+    "auc_success_std": 680.4135516531243,
+    "steps_to_70_success_mean": null,
+    "steps_to_80_success_mean": null,
+    "run_dirs": [
+      "artifacts\\checkpoints\\ppo_bc_aligned\\detour\\ppo_bc_init_seed7_20260504_022614",
+      "artifacts\\checkpoints\\ppo_bc_aligned\\detour\\ppo_bc_init_seed11_20260504_023625",
+      "artifacts\\checkpoints\\ppo_bc_aligned\\detour\\ppo_bc_init_seed19_20260504_024655"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "trajectory_diversity": {
+    "10": {
+      "mean_path_length": 1.6060904145240784,
+      "std_path_length": 0.0680362075066511,
+      "mean_corridor_y_std": 0.026112546399235725,
+      "mean_final_approach_heading_std": 0.27737045082629447,
+      "mean_pairwise_path_distance": 0.05774033649100198
+    },
+    "50": {
+      "mean_path_length": 1.634629237651825,
+      "std_path_length": 0.09548326159615686,
+      "mean_corridor_y_std": 0.02615813471376896,
+      "mean_final_approach_heading_std": 0.276637755435818,
+      "mean_pairwise_path_distance": 0.06387733948321975
+    },
+    "200": {
+      "mean_path_length": 1.6246066886186599,
+      "std_path_length": 0.0921846269309917,
+      "mean_corridor_y_std": 0.026134382095187904,
+      "mean_final_approach_heading_std": 0.2720321735591068,
+      "mean_pairwise_path_distance": 0.06771847177198596
+    }
+  },
+  "bc_vs_expert_rollout_summary": {
+    "10": {
+      "expert_success_5eval": 1.0,
+      "bc_success_5eval": 0.0
+    },
+    "50": {
+      "expert_success_5eval": 1.0,
+      "bc_success_5eval": 0.0
+    },
+    "200": {
+      "expert_success_5eval": 1.0,
+      "bc_success_5eval": 1.0
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "clean": {
+    "bc_only": {
+      "checkpoint_path": "artifacts\\checkpoints\\bc_aligned\\clean50\\bc_20260504_022538\\checkpoint.pt",
+      "dataset_path": "artifacts\\datasets\\detour_expert_20260502_172927.npz",
+      "task_variant": "detour",
+      "episodes": 50,
+      "success_rate": 0.28,
+      "mean_episode_return": 98.14814335277548,
+      "mean_episode_length": 319.66,
+      "mean_final_distance": 0.3287605552670809
+    },
+    "bc_ppo_final": {
+      "success_rate": 0.1111111111111111,
+      "mean_episode_return": 81.828226826098,
+      "mean_final_distance": 0.4755659839713238
+    }
+  },
+  "noisy": {
+    "bc_only": {
+      "checkpoint_path": "artifacts\\checkpoints\\bc_aligned\\noisy50\\bc_20260504_022538\\checkpoint.pt",
+      "dataset_path": "artifacts\\datasets\\demo_quality\\noisy50\\detour_noisy50_expert_20260504_013459.npz",
+      "task_variant": "detour",
+      "episodes": 50,
+      "success_rate": 0.66,
+      "mean_episode_return": 82.01220182737637,
+      "mean_episode_length": 285.9,
+      "mean_final_distance": 0.29157553974381967
+    },
+    "bc_ppo_final": {
+      "success_rate": 0.0,
+      "mean_episode_return": 52.639159961809334,
+      "mean_final_distance": 0.6765890515532612
+    }
+  }
+}

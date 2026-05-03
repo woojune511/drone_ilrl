@@ -44,7 +44,50 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional per-episode step cap. Defaults to env episode length.",
     )
+    parser.add_argument(
+        "--action-noise-std",
+        type=float,
+        default=0.0,
+        help="Gaussian noise std added to expert actions to simulate imperfect demonstrations.",
+    )
+    parser.add_argument(
+        "--sticky-action-prob",
+        type=float,
+        default=0.0,
+        help="Probability of repeating the previous applied action instead of the new expert action.",
+    )
+    parser.add_argument(
+        "--action-mix-alpha",
+        type=float,
+        default=0.0,
+        help="Blend factor for previous action inertia. applied = alpha * prev + (1-alpha) * expert.",
+    )
+    parser.add_argument(
+        "--quality-tag",
+        type=str,
+        default="clean",
+        help="Free-form label describing demonstration quality, e.g. clean or noisy.",
+    )
     return parser.parse_args()
+
+
+def perturb_action(
+    action: np.ndarray,
+    prev_action: np.ndarray | None,
+    rng: np.random.Generator,
+    noise_std: float,
+    sticky_action_prob: float,
+    action_mix_alpha: float,
+) -> np.ndarray:
+    applied = action.astype(np.float32).copy()
+    if prev_action is not None:
+        if sticky_action_prob > 0.0 and rng.uniform() < sticky_action_prob:
+            applied = prev_action.astype(np.float32).copy()
+        elif action_mix_alpha > 0.0:
+            applied = action_mix_alpha * prev_action.astype(np.float32) + (1.0 - action_mix_alpha) * applied
+    if noise_std > 0.0:
+        applied = applied + rng.normal(0.0, noise_std, size=applied.shape).astype(np.float32)
+    return np.clip(applied, -1.0, 1.0).astype(np.float32)
 
 
 def main() -> None:
@@ -52,6 +95,7 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     env, expert_policy = build_env_and_expert(args.task_variant, args.gui)
+    rng = np.random.default_rng(args.seed)
 
     obs_buffer: list[np.ndarray] = []
     act_buffer: list[np.ndarray] = []
@@ -72,11 +116,20 @@ def main() -> None:
         obs, info = env.reset(seed=args.seed + episode_idx)
         episode_return = 0.0
         episode_steps = 0
+        prev_applied_action: np.ndarray | None = None
         episode_initial_positions.append(np.asarray(info["position"], dtype=np.float32))
         episode_goals.append(np.asarray(info["goal"], dtype=np.float32))
 
         while True:
-            action = expert_policy(obs)
+            expert_action = expert_policy(obs)
+            action = perturb_action(
+                expert_action,
+                prev_applied_action,
+                rng,
+                noise_std=args.action_noise_std,
+                sticky_action_prob=args.sticky_action_prob,
+                action_mix_alpha=args.action_mix_alpha,
+            )
             next_obs, reward, terminated, truncated, info = env.step(action)
 
             obs_buffer.append(obs.astype(np.float32))
@@ -88,6 +141,7 @@ def main() -> None:
             episode_id_buffer.append(episode_idx)
 
             obs = next_obs
+            prev_applied_action = action
             episode_return += float(reward)
             episode_steps += 1
 
@@ -108,7 +162,7 @@ def main() -> None:
     env.close()
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    stem = f"{args.task_variant}_expert_{timestamp}"
+    stem = f"{args.task_variant}_{args.quality_tag}_expert_{timestamp}"
     dataset_path = args.output_dir / f"{stem}.npz"
     summary_path = args.output_dir / f"{stem}_summary.json"
 
@@ -144,6 +198,10 @@ def main() -> None:
         "mean_final_distance": mean_final_distance,
         "seed": args.seed,
         "task_variant": args.task_variant,
+        "quality_tag": args.quality_tag,
+        "action_noise_std": float(args.action_noise_std),
+        "sticky_action_prob": float(args.sticky_action_prob),
+        "action_mix_alpha": float(args.action_mix_alpha),
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 

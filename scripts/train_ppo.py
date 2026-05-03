@@ -6,6 +6,9 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
+import torch
+
+from ilrl_lab.bc import load_bc_checkpoint
 from ilrl_lab.ppo_training import (
     PeriodicEvalCallback,
     build_ppo_model,
@@ -40,6 +43,12 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Initial log standard deviation for the PPO Gaussian policy.",
     )
+    parser.add_argument(
+        "--obs-norm-bc-checkpoint",
+        type=Path,
+        default=None,
+        help="Optional BC checkpoint whose obs_mean/obs_std will be used to normalize PPO observations.",
+    )
     parser.add_argument("--gui", action="store_true", help="Enable GUI for the training environment.")
     parser.add_argument(
         "--task-variant",
@@ -56,7 +65,18 @@ def main() -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     args.run_dir = run_dir
 
-    env = build_training_env(gui=args.gui, seed=args.seed, task_variant=args.task_variant)
+    obs_mean = None
+    obs_std = None
+    if args.obs_norm_bc_checkpoint is not None:
+        _, obs_mean, obs_std, _ = load_bc_checkpoint(args.obs_norm_bc_checkpoint, torch.device("cpu"))
+
+    env = build_training_env(
+        gui=args.gui,
+        seed=args.seed,
+        task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
+    )
     model = build_ppo_model(env, args.seed, args)
 
     callback = PeriodicEvalCallback(
@@ -65,6 +85,8 @@ def main() -> None:
         eval_seed=args.seed + 10_000,
         run_dir=run_dir,
         task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
     )
 
     model.learn(total_timesteps=args.total_timesteps, callback=callback, progress_bar=False)
@@ -76,6 +98,8 @@ def main() -> None:
         args.eval_episodes,
         args.seed + 20_000,
         task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
     )
     final_eval.timesteps = int(args.total_timesteps)
 
@@ -94,6 +118,7 @@ def main() -> None:
         "ent_coef": args.ent_coef,
         "vf_coef": args.vf_coef,
         "log_std_init": args.log_std_init,
+        "obs_norm_bc_checkpoint": None if args.obs_norm_bc_checkpoint is None else str(args.obs_norm_bc_checkpoint),
         "task_variant": args.task_variant,
         "final_model_path": str(final_model_path),
         "best_model_path": str(callback.best_model_path),

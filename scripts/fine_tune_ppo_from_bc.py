@@ -8,6 +8,7 @@ from pathlib import Path
 
 import torch
 
+from ilrl_lab.bc import load_bc_checkpoint
 from ilrl_lab.ppo_training import (
     build_bc_fine_tune_callback,
     build_ppo_model,
@@ -84,7 +85,14 @@ def main() -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     args.run_dir = run_dir
 
-    env = build_training_env(gui=args.gui, seed=args.seed, task_variant=args.task_variant)
+    _, obs_mean, obs_std, _ = load_bc_checkpoint(args.bc_checkpoint, torch.device("cpu"))
+    env = build_training_env(
+        gui=args.gui,
+        seed=args.seed,
+        task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
+    )
     model = build_ppo_model(env, args.seed, args)
     init_info = initialize_actor_from_bc(
         model,
@@ -99,6 +107,8 @@ def main() -> None:
         eval_seed=args.seed + 10_000,
         run_dir=run_dir,
         task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
         freeze_actor_steps=args.freeze_actor_steps,
         freeze_actor_mode=args.freeze_actor_mode,
     )
@@ -112,6 +122,8 @@ def main() -> None:
         args.eval_episodes,
         args.seed + 20_000,
         task_variant=args.task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
     )
     final_eval.timesteps = int(args.total_timesteps)
 
@@ -135,6 +147,7 @@ def main() -> None:
         "freeze_actor_steps": args.freeze_actor_steps,
         "freeze_actor_mode": args.freeze_actor_mode,
         "bc_checkpoint": str(args.bc_checkpoint),
+        "uses_bc_obs_normalization": True,
         "initialization": init_info,
         "final_model_path": str(final_model_path),
         "best_model_path": str(eval_callback.best_model_path),

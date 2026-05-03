@@ -2,21 +2,20 @@
 
 ## Final takeaway
 
-The cleanest result in this repo comes from the **detour navigation task** rather than the original waypoint task.
+The most trustworthy result in this repo now comes from the **detour navigation task after fixing the BC -> PPO transfer path**.
 
-Under a matched setup:
+The original transfer had two implementation mismatches:
 
-- same detour environment
-- same detour-aware reward (`v2`)
-- same PPO horizon (`300k`)
-- same exploration init (`log_std_init=-0.5`)
-- same evaluation protocol (`30` episodes every `50k`)
+1. BC was trained on normalized observations, but PPO originally consumed raw observations.
+2. BC originally used a `Tanh` output head, while PPO used a linear Gaussian mean head.
 
-`BC + PPO` clearly outperformed `PPO from scratch`.
+Those issues are documented in:
 
-The shortest honest summary is:
+- `docs/normalization_fix_rerun.md`
 
-> On a detour-constrained drone navigation task with a real exploration bottleneck, BC-initialized PPO learned successful behavior within a matched `300k`-step budget while scratch PPO did not.
+After fixing them, the cleanest matched comparison still shows the same high-level story:
+
+> On the detour-constrained task, BC-initialized PPO learns materially better behavior than scratch PPO under the same `300k`-step budget.
 
 ## Repo components
 
@@ -27,90 +26,61 @@ The shortest honest summary is:
 - Shared PPO utilities: `src/ilrl_lab/ppo_training.py`
 - Scratch PPO entrypoint: `scripts/train_ppo.py`
 - BC-initialized PPO entrypoint: `scripts/fine_tune_ppo_from_bc.py`
+- Alignment sanity check: `scripts/check_bc_ppo_alignment.py`
 - Plotting: `scripts/plot_experiment_results.py`
 
 ## Phase 1: Waypoint baseline
 
-The original waypoint task was useful for validating the end-to-end pipeline, but it was still fairly PPO-friendly:
+The original waypoint task validated the end-to-end pipeline but was still fairly PPO-friendly:
 
 - full-state observation
 - dense reward
 - high-level velocity action
 - a single goal without a true path-planning bottleneck
 
-That setting produced a nuanced result: BC improved early behavior, but scratch PPO mostly caught up by long horizon.
-
-Reference figures are kept in:
-
-- `artifacts/figures/ppo_vs_bc_init_300k/`
-
-This phase was still worth doing because it showed that the implementation worked before making the task harder.
+That setting was useful, but it did not separate IL from scratch RL sharply enough.
 
 ## Phase 2: Detour task
 
-To create a setting where imitation could matter more, the environment was extended into `DetourWaypointVelocityAviary`.
-
-Task structure:
+The detour task adds a real exploration bottleneck:
 
 - start sampled on the left side of the workspace
 - goal sampled on the right side
 - a blocking wall prevents direct flight
 - only an upper corridor is open
 
-This turns the problem into a simple staged navigation task:
+This turns the problem into a staged navigation task:
 
 1. align with the corridor
 2. pass the wall
 3. return to the final goal and stabilize
 
-### Why the first detour version was unstable
+The task became much more informative once three things were in place:
 
-The main issue was task design more than model size.
+- a corridor-aware scripted expert
+- detour-aware reward shaping (`v2`)
+- less noisy evaluation (`30` episodes during training, `50` for BC-only checks)
 
-- reward mostly tracked final-goal distance
-- the correct early behavior often moved away from the straight-line goal path
-- collision feedback was sparse and late
-- success was strict because the drone had to both reach the goal and slow down
+## Transfer fix
 
-That made exploration noisy and seed-sensitive.
+The original BC -> PPO pipeline was not functionally exact at initialization.
 
-## Fixes that mattered
+Fixes applied:
 
-### 1. Better expert
+- PPO training/evaluation now uses the BC checkpoint's observation normalization stats.
+- BC fine-tuning now uses a **linear output head** so the copied BC actor matches PPO's action head.
+- PPO initialization now rejects old tanh-headed BC checkpoints.
 
-The detour expert was upgraded so it no longer stopped at intermediate corridor waypoints. Instead, it treats corridor waypoints as transit targets and commits to the final goal before velocity collapses.
+Sanity check:
 
-### 2. BC-aware PPO regularization
+- `artifacts/checks/bc_ppo_alignment_clean50_fixed.json`
 
-The most useful PPO-side changes were:
+Result:
 
-- weak BC regularization: `bc_kl_coef = 0.0003`
-- smaller exploration at initialization: `log_std_init = -0.5`
+- `mean_action_l2_diff = 0.0`
+- `mean_cosine_similarity = 1.0`
 
-This preserved some imitation prior without freezing the actor too aggressively.
-
-### 3. Softer detour-aware reward shaping (`v2`)
-
-The strongest reward version overfit badly across seeds, so it was softened.
-
-The final detour shaping adds only modest incentives for:
-
-- moving toward the corridor entry/exit subgoal
-- making progress within the current detour stage
-- receiving a small bonus when transitioning between stages
-
-This kept the reward aligned with the task while preserving final-goal pressure.
-
-### 4. Less noisy evaluation
-
-Using only `10` evaluation episodes made checkpoint selection too noisy.
-
-The final protocol uses:
-
-- `30` online evaluation episodes during training
-- `50` episodes for best-checkpoint re-evaluation
-
-That made the final comparison much more trustworthy.
+So after the fix, BC and PPO really do start from the same policy.
 
 ## Final matched comparison
 
@@ -122,72 +92,110 @@ That made the final comparison much more trustworthy.
 - seeds: `7`, `11`, `19`
 - evaluation every `50,000` steps
 - `30` evaluation episodes per checkpoint
-- scratch PPO: tuned only with the same `log_std_init=-0.5`
-- BC+PPO: same PPO settings plus BC actor initialization and `bc_kl_coef=0.0003`
+- scratch PPO:
+  - `log_std_init=-0.5`
+  - same observation normalization as BC+PPO
+- BC+PPO:
+  - same PPO settings
+  - BC actor initialization
+  - `bc_kl_coef=0.0003`
 
-### Learning-curve summary
+### Artifacts
 
-Figures:
+- summary JSON: `artifacts/figures/detour_aligned_matched_compare/experiment_summary.json`
+- success curve: `artifacts/figures/detour_aligned_matched_compare/success_rate_vs_steps.png`
+- return curve: `artifacts/figures/detour_aligned_matched_compare/return_vs_steps.png`
+- distance curve: `artifacts/figures/detour_aligned_matched_compare/final_distance_vs_steps.png`
+- trajectory comparison: `artifacts/figures/detour_aligned_matched_compare/trajectory_comparison.png`
 
-- summary JSON: `artifacts/figures/detour_reward_v2_eval30_matched_compare/experiment_summary.json`
-- success curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/success_rate_vs_steps.png`
-- return curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/return_vs_steps.png`
-- distance curve: `artifacts/figures/detour_reward_v2_eval30_matched_compare/final_distance_vs_steps.png`
-- trajectory comparison: `artifacts/figures/detour_reward_v2_eval30_matched_compare/trajectory_comparison.png`
-- portfolio overview: `artifacts/figures/detour_reward_v2_eval30_matched_compare/portfolio_overview.png`
-
-Final `30`-episode evaluation mean:
-
-| Method | Success | Mean final distance | Mean return |
-|---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.741` | `37.01` |
-| BC + PPO | `0.30` | `0.307` | `124.25` |
-
-This is the main result worth carrying forward.
-
-### Conservative best-checkpoint re-evaluation
-
-Because the task is still noisy, the selected best checkpoints were re-evaluated on `50` episodes.
-
-Seed-level results:
-
-| Method | Seed | Success | Mean final distance | Mean return |
-|---|---:|---:|---:|---:|
-| PPO scratch | `7` | `0.00` | `0.773` | `25.18` |
-| PPO scratch | `11` | `0.00` | `0.793` | `16.60` |
-| PPO scratch | `19` | `0.00` | `0.759` | `26.14` |
-| BC + PPO | `7` | `0.36` | `0.384` | `89.72` |
-| BC + PPO | `11` | `0.12` | `0.360` | `131.52` |
-| BC + PPO | `19` | `0.34` | `0.473` | `52.25` |
-
-Conservative mean over the three seeds:
+### Final 30-episode mean
 
 | Method | Success | Mean final distance | Mean return |
 |---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.775` | `22.64` |
-| BC + PPO | `0.27` | `0.406` | `91.16` |
+| PPO scratch | `0.00` | `0.732` | `21.15` |
+| BC + PPO | `0.111` | `0.476` | `81.83` |
 
-Even under this stricter re-evaluation, BC-initialized PPO remains clearly ahead.
+### Learning-curve interpretation
 
-## Interpretation
+The updated curves show a cleaner version of the same story:
 
-There are four results that matter most.
+- scratch PPO remains near zero success across all three seeds
+- BC+PPO starts improving distance earlier
+- BC+PPO is the only method that reaches nonzero mean success by the end of the matched budget
 
-1. The easy waypoint task was not enough to separate IL from scratch RL in a decisive way.
-2. The detour task exposed a real exploration bottleneck that scratch PPO struggled with.
-3. Task design and evaluation protocol mattered almost as much as the PPO algorithm itself.
-4. Once the task reward and evaluation protocol were cleaned up, BC initialization gave a meaningful advantage on both success and final distance.
+This comparison is more trustworthy than the older one because the transfer path is now behaviorally aligned at step 0.
 
-The cleanest technical message is:
+## Quantity ablation after the fix
 
-> IL mattered most when the task required a non-greedy detour policy and when PPO was prevented from destroying the imitation prior too quickly.
+Artifacts:
 
-## Portfolio framing
+- summary JSON: `artifacts/figures/demo_quantity_ablation_aligned/summary.json`
+- figure: `artifacts/figures/demo_quantity_ablation_aligned/demo_quantity_ablation_aligned.png`
 
-A strong portfolio summary would be:
+### BC-only
 
-> Built an imitation-learning-to-reinforcement-learning pipeline for drone navigation and extended it with a detour-constrained navigation task to stress exploration. After redesigning the task reward and evaluation protocol, BC-initialized PPO outperformed scratch PPO under a matched `300k`-step budget, improving final success from `0.00` to `0.30` on `30`-episode evaluations and reducing mean final distance from `0.741` to `0.307`.
+| Demo episodes | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| `10` | `0.02` | `0.747` | `50.08` |
+| `50` | `0.28` | `0.329` | `98.15` |
+| `200` | `0.94` | `0.075` | `71.38` |
 
-A more conservative version using the `50`-episode best-checkpoint re-evaluation is:
+### BC + PPO final 3-seed mean
 
-> Designed a harder detour navigation benchmark for drone control and showed that BC-initialized PPO achieved `0.27` mean success across `3` seeds while scratch PPO remained at `0.00`, with mean final distance reduced from `0.775` to `0.406`.
+| Demo episodes | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| `10` | `0.00` | `0.704` | `22.50` |
+| `50` | `0.111` | `0.476` | `81.83` |
+| `200` | `0.10` | `0.426` | `104.19` |
+
+### Updated interpretation
+
+- `10` demos are still too weak to form a useful prior.
+- `50` demos remain a strong IL -> RL regime.
+- `200` demos become competitive again after the transfer fix, because BC itself is now very strong and the PPO initialization is no longer distorted.
+
+So the old “50 is clearly the only sweet spot” story becomes softer after the fix. The more accurate version is:
+
+> moderate and large clean datasets both help, but they help in different ways: `50` demos provide a useful warm start while `200` demos make BC itself nearly sufficient.
+
+## Quality ablation after the fix
+
+Artifacts:
+
+- summary JSON: `artifacts/figures/demo_quality_ablation_aligned/summary.json`
+- figure: `artifacts/figures/demo_quality_ablation_aligned/demo_quality_ablation_aligned.png`
+
+### BC-only
+
+| Demo quality | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| Clean `50` | `0.28` | `0.329` | `98.15` |
+| Noisy `50` | `0.66` | `0.292` | `82.01` |
+
+### BC + PPO final 3-seed mean
+
+| Demo quality | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| Clean `50` | `0.111` | `0.476` | `81.83` |
+| Noisy `50` | `0.00` | `0.677` | `52.64` |
+
+### Updated interpretation
+
+This part of the story survives the transfer fix very clearly:
+
+- noisy demonstrations make **BC-only** much stronger
+- but noisy demonstrations make **BC-initialized PPO** worse
+
+That suggests noisy demos inject recovery-friendly behavior for pure cloning, while clean demos provide a sharper and more useful RL warm-start prior.
+
+## Bottom line
+
+There are three results that matter most now.
+
+1. The BC -> PPO transfer path originally had a real implementation defect, and fixing it mattered.
+2. After the fix, the main detour result still holds:
+   - BC-initialized PPO outperforms scratch PPO under a matched `300k`-step budget.
+3. The more nuanced ablation story also survives:
+   - noisy demos help BC-only robustness,
+   - clean demos are better for downstream RL warm starts,
+   - larger clean datasets make BC itself increasingly sufficient.

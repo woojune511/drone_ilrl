@@ -1,0 +1,259 @@
+{
+  "dataset_action_stats": {
+    "clean": {
+      "num_transitions": 10703,
+      "action_std_per_dim": [
+        0.21404880285263062,
+        0.622513473033905,
+        0.2834949493408203,
+        0.2159227579832077
+      ],
+      "action_abs_mean_per_dim": [
+        0.67784184217453,
+        0.558180034160614,
+        0.2549607455730438,
+        0.904695987701416
+      ],
+      "mean_delta_action_norm": 0.024711171726200746,
+      "p90_delta_action_norm": 0.05176770463585855
+    },
+    "noisy": {
+      "num_transitions": 13834,
+      "action_std_per_dim": [
+        0.3058856427669525,
+        0.6364452242851257,
+        0.39630305767059326,
+        0.239622563123703
+      ],
+      "action_abs_mean_per_dim": [
+        0.6048373579978943,
+        0.5602786540985107,
+        0.34253212809562683,
+        0.7919237613677979
+      ],
+      "mean_delta_action_norm": 0.3889185173136468,
+      "p90_delta_action_norm": 0.598165559768677
+    }
+  },
+  "bc_action_stats": {
+    "clean": {
+      "action_std_per_dim": [
+        0.20767849683761597,
+        0.5869677066802979,
+        0.26905709505081177,
+        0.18252970278263092
+      ],
+      "action_abs_mean_per_dim": [
+        0.6867950558662415,
+        0.5270816087722778,
+        0.2657161355018616,
+        0.8875218629837036
+      ],
+      "mean_pairwise_l2_to_mean": 0.6634100079536438
+    },
+    "noisy": {
+      "action_std_per_dim": [
+        0.20265281200408936,
+        0.5661929249763489,
+        0.29333987832069397,
+        0.15110796689987183
+      ],
+      "action_abs_mean_per_dim": [
+        0.6637051701545715,
+        0.4932110607624054,
+        0.29570335149765015,
+        0.8253442645072937
+      ],
+      "mean_pairwise_l2_to_mean": 0.64219069480896
+    }
+  },
+  "bc_action_comparison": {
+    "mean_action_l2_diff": 0.1869075447320938,
+    "p90_action_l2_diff": 0.28570117950439455,
+    "mean_cosine_similarity": 0.9895423054695129
+  },
+  "ppo_divergence": {
+    "clean": {
+      "run_name": "clean50_seed7_short",
+      "checkpoint_paths": [
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_0.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_10000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_20000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_30000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_40000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\clean50_seed7_short\\checkpoint_50000.zip"
+      ],
+      "divergence": [
+        {
+          "timesteps": 0,
+          "mean_action_l2_from_bc": 0.01897543855011463,
+          "p90_action_l2_from_bc": 0.06560009717941293,
+          "mean_cosine_to_bc": 0.999880850315094
+        },
+        {
+          "timesteps": 10000,
+          "mean_action_l2_from_bc": 0.3998458683490753,
+          "p90_action_l2_from_bc": 0.6441344380378723,
+          "mean_cosine_to_bc": 0.959928035736084
+        },
+        {
+          "timesteps": 20000,
+          "mean_action_l2_from_bc": 0.532899796962738,
+          "p90_action_l2_from_bc": 0.8022255897521974,
+          "mean_cosine_to_bc": 0.9266272783279419
+        },
+        {
+          "timesteps": 30000,
+          "mean_action_l2_from_bc": 0.557686448097229,
+          "p90_action_l2_from_bc": 0.8418483436107637,
+          "mean_cosine_to_bc": 0.9253186583518982
+        },
+        {
+          "timesteps": 40000,
+          "mean_action_l2_from_bc": 0.7779412269592285,
+          "p90_action_l2_from_bc": 1.2225635766983034,
+          "mean_cosine_to_bc": 0.7906738519668579
+        },
+        {
+          "timesteps": 50000,
+          "mean_action_l2_from_bc": 0.8686928749084473,
+          "p90_action_l2_from_bc": 1.32450749874115,
+          "mean_cosine_to_bc": 0.779909610748291
+        }
+      ],
+      "eval_history": [
+        {
+          "timesteps": 10000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 35.29918733523647,
+          "mean_episode_length": 285.15,
+          "mean_final_distance": 0.8896291262263045
+        },
+        {
+          "timesteps": 20000,
+          "episodes": 20,
+          "success_rate": 0.1,
+          "mean_episode_return": 37.61718894349997,
+          "mean_episode_length": 260.1,
+          "mean_final_distance": 0.7509137669749105
+        },
+        {
+          "timesteps": 30000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 15.232807274430414,
+          "mean_episode_length": 131.4,
+          "mean_final_distance": 0.7896706623992005
+        },
+        {
+          "timesteps": 40000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 12.75522098926835,
+          "mean_episode_length": 145.15,
+          "mean_final_distance": 0.8349974474351327
+        },
+        {
+          "timesteps": 50000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 22.1382476310388,
+          "mean_episode_length": 211.2,
+          "mean_final_distance": 0.7547096227984281
+        }
+      ]
+    },
+    "noisy": {
+      "run_name": "noisy50_seed7_short",
+      "checkpoint_paths": [
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_0.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_10000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_20000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_30000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_40000.zip",
+        "C:\\Users\\gjlee\\Desktop\\drone_ilrl\\artifacts\\figures\\demo_quality_mechanisms\\ppo_divergence_runs\\noisy50_seed7_short\\checkpoint_50000.zip"
+      ],
+      "divergence": [
+        {
+          "timesteps": 0,
+          "mean_action_l2_from_bc": 0.002124709077179432,
+          "p90_action_l2_from_bc": 2.1490760104825313e-07,
+          "mean_cosine_to_bc": 0.9999905824661255
+        },
+        {
+          "timesteps": 10000,
+          "mean_action_l2_from_bc": 0.36462435126304626,
+          "p90_action_l2_from_bc": 0.5222220063209534,
+          "mean_cosine_to_bc": 0.9673697352409363
+        },
+        {
+          "timesteps": 20000,
+          "mean_action_l2_from_bc": 0.5064172148704529,
+          "p90_action_l2_from_bc": 0.6963600099086765,
+          "mean_cosine_to_bc": 0.9407212138175964
+        },
+        {
+          "timesteps": 30000,
+          "mean_action_l2_from_bc": 0.6429014205932617,
+          "p90_action_l2_from_bc": 0.886676383018494,
+          "mean_cosine_to_bc": 0.9135905504226685
+        },
+        {
+          "timesteps": 40000,
+          "mean_action_l2_from_bc": 0.8016653656959534,
+          "p90_action_l2_from_bc": 1.1584094643592835,
+          "mean_cosine_to_bc": 0.9049047827720642
+        },
+        {
+          "timesteps": 50000,
+          "mean_action_l2_from_bc": 0.8780456781387329,
+          "p90_action_l2_from_bc": 1.2607715487480164,
+          "mean_cosine_to_bc": 0.8581814765930176
+        }
+      ],
+      "eval_history": [
+        {
+          "timesteps": 10000,
+          "episodes": 20,
+          "success_rate": 0.15,
+          "mean_episode_return": 98.58611530578227,
+          "mean_episode_length": 358.25,
+          "mean_final_distance": 0.4263102739862517
+        },
+        {
+          "timesteps": 20000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 15.631304396220651,
+          "mean_episode_length": 225.75,
+          "mean_final_distance": 0.9961162300088245
+        },
+        {
+          "timesteps": 30000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 20.69764477034944,
+          "mean_episode_length": 254.6,
+          "mean_final_distance": 1.0628500412990833
+        },
+        {
+          "timesteps": 40000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 11.587975954234421,
+          "mean_episode_length": 210.25,
+          "mean_final_distance": 1.0995354128206676
+        },
+        {
+          "timesteps": 50000,
+          "episodes": 20,
+          "success_rate": 0.0,
+          "mean_episode_return": 9.22252605773735,
+          "mean_episode_length": 185.75,
+          "mean_final_distance": 1.1542542878603588
+        }
+      ]
+    }
+  }
+}

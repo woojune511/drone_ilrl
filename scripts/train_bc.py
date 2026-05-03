@@ -46,6 +46,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-fraction", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--hidden-sizes", type=int, nargs="+", default=[256, 256])
+    parser.add_argument(
+        "--squash-output",
+        action="store_true",
+        help="Apply a tanh output layer. Disabled by default so BC actor matches PPO action head.",
+    )
     return parser.parse_args()
 
 
@@ -127,6 +132,7 @@ def main() -> None:
         obs_dim=int(obs.shape[1]),
         action_dim=int(acts.shape[1]),
         hidden_sizes=tuple(args.hidden_sizes),
+        squash_output=args.squash_output,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     loss_fn = nn.MSELoss()
@@ -172,6 +178,7 @@ def main() -> None:
                 "obs_dim": int(obs.shape[1]),
                 "action_dim": int(acts.shape[1]),
                 "hidden_sizes": list(args.hidden_sizes),
+                "squash_output": bool(args.squash_output),
                 "best_val_loss": best_val_loss,
             }
             save_bc_checkpoint(checkpoint_path, model, obs_mean, obs_std, metadata)
@@ -185,6 +192,7 @@ def main() -> None:
         "batch_size": args.batch_size,
         "lr": args.lr,
         "weight_decay": args.weight_decay,
+        "squash_output": bool(args.squash_output),
         "best_val_loss": best_val_loss,
         "history": history,
         "checkpoint_path": str(checkpoint_path),

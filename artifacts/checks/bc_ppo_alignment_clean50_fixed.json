@@ -1,0 +1,9 @@
+{
+  "bc_checkpoint": "artifacts\\checkpoints\\bc_aligned\\clean50\\bc_20260504_022538\\checkpoint.pt",
+  "task_variant": "detour",
+  "num_states": 512,
+  "mean_action_l2_diff": 0.0,
+  "p90_action_l2_diff": 0.0,
+  "max_action_l2_diff": 0.0,
+  "mean_cosine_similarity": 1.0
+}

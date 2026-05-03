@@ -1,0 +1,53 @@
+{
+  "q10": {
+    "bc_only": {
+      "checkpoint_path": "artifacts\\checkpoints\\bc_aligned\\q10\\bc_20260504_025756\\checkpoint.pt",
+      "dataset_path": "artifacts\\datasets\\demo_qty\\q10\\detour_expert_20260503_234921.npz",
+      "task_variant": "detour",
+      "episodes": 50,
+      "success_rate": 0.02,
+      "mean_episode_return": 50.07784924659703,
+      "mean_episode_length": 239.12,
+      "mean_final_distance": 0.7471649873982373
+    },
+    "bc_ppo_final": {
+      "success_rate": 0.0,
+      "mean_episode_return": 22.495713932767995,
+      "mean_final_distance": 0.7036537994713514
+    }
+  },
+  "q50": {
+    "bc_only": {
+      "checkpoint_path": "artifacts\\checkpoints\\bc_aligned\\clean50\\bc_20260504_022538\\checkpoint.pt",
+      "dataset_path": "artifacts\\datasets\\detour_expert_20260502_172927.npz",
+      "task_variant": "detour",
+      "episodes": 50,
+      "success_rate": 0.28,
+      "mean_episode_return": 98.14814335277548,
+      "mean_episode_length": 319.66,
+      "mean_final_distance": 0.3287605552670809
+    },
+    "bc_ppo_final": {
+      "success_rate": 0.1111111111111111,
+      "mean_episode_return": 81.828226826098,
+      "mean_final_distance": 0.4755659839713238
+    }
+  },
+  "q200": {
+    "bc_only": {
+      "checkpoint_path": "artifacts\\checkpoints\\bc_aligned\\q200\\bc_20260504_025756\\checkpoint.pt",
+      "dataset_path": "artifacts\\datasets\\demo_qty\\q200\\detour_expert_20260503_235013.npz",
+      "task_variant": "detour",
+      "episodes": 50,
+      "success_rate": 0.94,
+      "mean_episode_return": 71.37927995104516,
+      "mean_episode_length": 257.28,
+      "mean_final_distance": 0.07522360084715758
+    },
+    "bc_ppo_final": {
+      "success_rate": 0.09999999999999999,
+      "mean_episode_return": 104.1929131569126,
+      "mean_final_distance": 0.4263475840481794
+    }
+  }
+}

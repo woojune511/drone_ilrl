@@ -14,6 +14,7 @@ from stable_baselines3 import PPO
 from ilrl_lab.bc import load_bc_checkpoint, predict_action
 from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
 from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
+from ilrl_lab.ppo_training import FixedObservationNormalization
 
 
 def parse_args() -> argparse.Namespace:
@@ -247,6 +248,59 @@ def rollout_ppo(model_path: Path, seed: int, label: str, task_variant: str) -> d
             }
 
 
+def rollout_ppo_with_obs_norm(
+    model_path: Path,
+    seed: int,
+    label: str,
+    task_variant: str,
+    obs_mean: np.ndarray,
+    obs_std: np.ndarray,
+) -> dict:
+    env = make_env(task_variant)
+    env = FixedObservationNormalization(env, obs_mean=obs_mean, obs_std=obs_std)
+    model = PPO.load(model_path)
+    obs, info = env.reset(seed=seed)
+    goal = np.asarray(info["goal"], dtype=np.float32)
+    positions = [np.asarray(info["position"], dtype=np.float32)]
+    episode_return = 0.0
+    steps = 0
+    while True:
+        action, _ = model.predict(obs, deterministic=True)
+        obs, reward, terminated, truncated, info = env.step(action)
+        positions.append(np.asarray(info["position"], dtype=np.float32))
+        episode_return += float(reward)
+        steps += 1
+        if terminated or truncated:
+            env.close()
+            return {
+                "label": label,
+                "goal": goal.astype(float).tolist(),
+                "positions": np.stack(positions).astype(float).tolist(),
+                "success": bool(info["success"]),
+                "return": float(episode_return),
+                "steps": int(steps),
+            }
+
+
+def obs_norm_from_run_summary(run_summary: dict, fallback_bc_checkpoint: Path | None = None) -> tuple[np.ndarray, np.ndarray] | None:
+    if run_summary.get("uses_bc_obs_normalization"):
+        init_info = run_summary.get("initialization", {})
+        obs_mean_json = init_info.get("obs_mean")
+        obs_std_json = init_info.get("obs_std")
+        if obs_mean_json is not None and obs_std_json is not None:
+            return (
+                np.asarray(json.loads(obs_mean_json), dtype=np.float32),
+                np.asarray(json.loads(obs_std_json), dtype=np.float32),
+            )
+    checkpoint_path = run_summary.get("obs_norm_bc_checkpoint")
+    if checkpoint_path is None and fallback_bc_checkpoint is not None:
+        checkpoint_path = str(fallback_bc_checkpoint)
+    if checkpoint_path is None:
+        return None
+    _, obs_mean, obs_std, _ = load_bc_checkpoint(Path(checkpoint_path), torch.device("cpu"))
+    return obs_mean, obs_std
+
+
 def plot_trajectories(output_path: Path, rollouts: list[dict]) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     projections = [
@@ -322,11 +376,31 @@ def main() -> None:
 
     scratch_best = Path(scratch_runs[0]["best_model_path"])
     bc_init_best = Path(bc_init_runs[0]["best_model_path"])
+    scratch_obs_norm = obs_norm_from_run_summary(scratch_runs[0], fallback_bc_checkpoint=args.bc_checkpoint)
+    bc_init_obs_norm = obs_norm_from_run_summary(bc_init_runs[0], fallback_bc_checkpoint=args.bc_checkpoint)
     rollouts = [
         rollout_expert(args.trajectory_seed, args.task_variant),
         rollout_bc(args.bc_checkpoint, args.trajectory_seed, args.task_variant),
-        rollout_ppo(scratch_best, args.trajectory_seed, "PPO scratch", args.task_variant),
-        rollout_ppo(bc_init_best, args.trajectory_seed, "BC + PPO", args.task_variant),
+        rollout_ppo_with_obs_norm(
+            scratch_best,
+            args.trajectory_seed,
+            "PPO scratch",
+            args.task_variant,
+            obs_mean=scratch_obs_norm[0],
+            obs_std=scratch_obs_norm[1],
+        )
+        if scratch_obs_norm is not None
+        else rollout_ppo(scratch_best, args.trajectory_seed, "PPO scratch", args.task_variant),
+        rollout_ppo_with_obs_norm(
+            bc_init_best,
+            args.trajectory_seed,
+            "BC + PPO",
+            args.task_variant,
+            obs_mean=bc_init_obs_norm[0],
+            obs_std=bc_init_obs_norm[1],
+        )
+        if bc_init_obs_norm is not None
+        else rollout_ppo(bc_init_best, args.trajectory_seed, "BC + PPO", args.task_variant),
     ]
     (args.output_dir / "trajectory_rollouts.json").write_text(json.dumps(rollouts, indent=2), encoding="utf-8")
     plot_trajectories(args.output_dir / "trajectory_comparison.png", rollouts)

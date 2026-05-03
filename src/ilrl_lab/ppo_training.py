@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+import gymnasium as gym
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -18,41 +19,54 @@ from ilrl_lab.bc import BehaviorCloningPolicy, load_bc_checkpoint
 from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
 
 
+class FixedObservationNormalization(gym.ObservationWrapper):
+    """Apply fixed observation normalization statistics to an env."""
+
+    def __init__(self, env: gym.Env, obs_mean: np.ndarray, obs_std: np.ndarray) -> None:
+        super().__init__(env)
+        self.obs_mean = np.asarray(obs_mean, dtype=np.float32)
+        self.obs_std = np.asarray(obs_std, dtype=np.float32)
+        shape = self.observation_space.shape
+        self.observation_space = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=shape,
+            dtype=np.float32,
+        )
+
+    def observation(self, observation: np.ndarray) -> np.ndarray:
+        normalized = (np.asarray(observation, dtype=np.float32) - self.obs_mean) / self.obs_std
+        return normalized.astype(np.float32)
+
+
 class BCKLRegularizedPPO(PPO):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.bc_kl_coef = 0.0
         self.bc_prior_model: BehaviorCloningPolicy | None = None
-        self.bc_prior_obs_mean: torch.Tensor | None = None
-        self.bc_prior_obs_std: torch.Tensor | None = None
+        self.bc_prior_expects_normalized_obs = True
 
     def set_bc_kl_prior(
         self,
         bc_model: BehaviorCloningPolicy,
-        obs_mean: np.ndarray,
-        obs_std: np.ndarray,
         coef: float,
+        expects_normalized_obs: bool = True,
     ) -> None:
         self.bc_kl_coef = float(coef)
         self.bc_prior_model = bc_model.to(self.device)
         self.bc_prior_model.eval()
         for param in self.bc_prior_model.parameters():
             param.requires_grad = False
-        self.bc_prior_obs_mean = torch.as_tensor(obs_mean, dtype=torch.float32, device=self.device)
-        self.bc_prior_obs_std = torch.as_tensor(obs_std, dtype=torch.float32, device=self.device)
+        self.bc_prior_expects_normalized_obs = expects_normalized_obs
 
     def _compute_bc_kl_loss(self, observations: torch.Tensor) -> torch.Tensor | None:
-        if (
-            self.bc_kl_coef <= 0.0
-            or self.bc_prior_model is None
-            or self.bc_prior_obs_mean is None
-            or self.bc_prior_obs_std is None
-        ):
+        if self.bc_kl_coef <= 0.0 or self.bc_prior_model is None:
             return None
 
         with torch.no_grad():
-            normalized_obs = (observations - self.bc_prior_obs_mean) / self.bc_prior_obs_std
-            bc_mean_actions = self.bc_prior_model(normalized_obs)
+            if not self.bc_prior_expects_normalized_obs:
+                raise RuntimeError("BC KL prior expects raw observations, which is no longer supported.")
+            bc_mean_actions = self.bc_prior_model(observations)
 
         features = self.policy.extract_features(observations)
         if self.policy.share_features_extractor:
@@ -187,9 +201,13 @@ def evaluate_model(
     episodes: int,
     seed: int,
     task_variant: str = "waypoint",
+    obs_mean: np.ndarray | None = None,
+    obs_std: np.ndarray | None = None,
     return_trajectories: bool = False,
 ) -> tuple[EvalRecord, list[dict[str, Any]]]:
     env = make_env_instance(task_variant, gui=False)
+    if obs_mean is not None and obs_std is not None:
+        env = FixedObservationNormalization(env, obs_mean=obs_mean, obs_std=obs_std)
     episode_returns: list[float] = []
     episode_lengths: list[int] = []
     episode_successes: list[bool] = []
@@ -248,6 +266,8 @@ class PeriodicEvalCallback(BaseCallback):
         eval_seed: int,
         run_dir: Path,
         task_variant: str = "waypoint",
+        obs_mean: np.ndarray | None = None,
+        obs_std: np.ndarray | None = None,
         verbose: int = 0,
     ) -> None:
         super().__init__(verbose=verbose)
@@ -256,6 +276,8 @@ class PeriodicEvalCallback(BaseCallback):
         self.eval_seed = int(eval_seed)
         self.run_dir = run_dir
         self.task_variant = task_variant
+        self.obs_mean = None if obs_mean is None else np.asarray(obs_mean, dtype=np.float32)
+        self.obs_std = None if obs_std is None else np.asarray(obs_std, dtype=np.float32)
         self.eval_history: list[EvalRecord] = []
         self.best_success_rate = -float("inf")
         self.history_path = self.run_dir / "eval_history.json"
@@ -270,6 +292,8 @@ class PeriodicEvalCallback(BaseCallback):
             self.eval_episodes,
             self.eval_seed,
             task_variant=self.task_variant,
+            obs_mean=self.obs_mean,
+            obs_std=self.obs_std,
         )
         record.timesteps = int(self.num_timesteps)
         self.eval_history.append(record)
@@ -330,9 +354,17 @@ class FreezeActorCallback(BaseCallback):
         )
 
 
-def build_training_env(gui: bool, seed: int, task_variant: str = "waypoint") -> DummyVecEnv:
+def build_training_env(
+    gui: bool,
+    seed: int,
+    task_variant: str = "waypoint",
+    obs_mean: np.ndarray | None = None,
+    obs_std: np.ndarray | None = None,
+) -> DummyVecEnv:
     def make_env():
         env = make_env_instance(task_variant, gui=gui)
+        if obs_mean is not None and obs_std is not None:
+            env = FixedObservationNormalization(env, obs_mean=obs_mean, obs_std=obs_std)
         env.reset(seed=seed)
         return env
 
@@ -371,6 +403,10 @@ def initialize_actor_from_bc(
     bc_kl_coef: float = 0.0,
 ) -> dict[str, str]:
     bc_model, obs_mean, obs_std, metadata = load_bc_checkpoint(bc_checkpoint, device)
+    if bool(metadata.get("squash_output", True)):
+        raise ValueError(
+            "BC checkpoint uses a tanh-squashed output head. Retrain BC with linear output before PPO initialization."
+        )
     bc_state = bc_model.state_dict()
     ppo_state = model.policy.state_dict()
 
@@ -387,12 +423,14 @@ def initialize_actor_from_bc(
 
     model.policy.load_state_dict(ppo_state)
     if bc_kl_coef > 0.0 and isinstance(model, BCKLRegularizedPPO):
-        model.set_bc_kl_prior(bc_model, obs_mean, obs_std, coef=bc_kl_coef)
+        model.set_bc_kl_prior(bc_model, coef=bc_kl_coef, expects_normalized_obs=True)
     return {
         "bc_checkpoint": str(bc_checkpoint),
         "bc_dataset_path": str(metadata.get("dataset_path")),
         "copied_layers": json.dumps(mapping),
         "bc_kl_coef": str(float(bc_kl_coef)),
+        "obs_mean": json.dumps(obs_mean.astype(float).tolist()),
+        "obs_std": json.dumps(obs_std.astype(float).tolist()),
     }
 
 
@@ -402,6 +440,8 @@ def build_bc_fine_tune_callback(
     eval_seed: int,
     run_dir: Path,
     task_variant: str,
+    obs_mean: np.ndarray | None,
+    obs_std: np.ndarray | None,
     freeze_actor_steps: int,
     freeze_actor_mode: str,
 ) -> tuple[BaseCallback, PeriodicEvalCallback]:
@@ -412,6 +452,8 @@ def build_bc_fine_tune_callback(
         eval_seed=eval_seed,
         run_dir=run_dir,
         task_variant=task_variant,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
     )
     if freeze_actor_steps > 0:
         callbacks.append(
