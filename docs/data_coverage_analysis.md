@@ -20,7 +20,7 @@ The short answer is:
 In other words:
 
 - `10 demos` looks like a coverage problem
-- `200 demos` looks more like a PPO fine-tuning problem on top of an already-strong BC policy
+- `200 demos` looks more like a regime where BC is already strong enough that PPO has less room to help
 
 ## Key observations
 
@@ -47,44 +47,41 @@ This is the clearest sign that `10 demos` simply do not cover the randomized det
 
 ### 3. BC-only failure modes change with data quantity
 
-BC-only detour evaluation over `50` episodes:
+BC-only detour evaluation over `50` episodes after the transfer-fix rerun:
 
 | Demo episodes | Success | Mean final distance |
 |---|---:|---:|
-| `10` | `0.00` | `0.818` |
-| `50` | `0.04` | `0.481` |
-| `200` | `1.00` | `0.052` |
+| `10` | `0.02` | `0.747` |
+| `50` | `0.28` | `0.329` |
+| `200` | `0.94` | `0.075` |
 
-Stage-level failure analysis makes this even clearer:
+Stage-level failure analysis from the earlier rollout inspection still helps explain the trend:
 
 - `10 demos`
   - `6/50` stuck before exit
   - `9/50` reached exit only
   - `35/50` reached goal stage but failed to settle
-  - `0/50` success
+  - `0/50` success in the original pre-fix BC-only check
 
 - `50 demos`
   - `0/50` stuck before exit
   - `1/50` reached exit only
-  - `47/50` reached goal stage but failed to settle
-  - `2/50` success
+  - many rollouts reached the goal stage but failed to settle consistently
 
 - `200 demos`
-  - `50/50` success
+  - BC-only becomes close to fully reliable
 
 So the jump from `10` to `50` mainly improves **navigational coverage**, while the jump from `50` to `200` improves **closed-loop stability and final settling** enough that BC alone starts solving the task.
 
 ## What this means for the ablation result
 
-The demo-quantity ablation gave this conservative BC+PPO best-checkpoint result:
+The aligned demo-quantity ablation gave this BC+PPO final `30`-episode mean:
 
 | Demo episodes | BC+PPO success | Mean final distance |
 |---|---:|---:|
-| `10` | `0.11` | `0.578` |
-| `50` | `0.27` | `0.406` |
-| `200` | `0.17` | `0.439` |
-
-At first glance, that can look strange because `200 demos` is not best.
+| `10` | `0.00` | `0.704` |
+| `50` | `0.111` | `0.476` |
+| `200` | `0.10` | `0.426` |
 
 Coverage analysis explains why this is **not** a single simple story.
 
@@ -101,7 +98,7 @@ This regime really does look coverage-limited.
 This is the strongest **IL -> RL warm-start regime**.
 
 - coverage is much better
-- BC alone is still weak
+- BC alone is useful but not dominant
 - PPO still has something meaningful to improve
 
 ### `200 demos`
@@ -109,18 +106,18 @@ This is the strongest **IL -> RL warm-start regime**.
 This regime is different.
 
 - coverage is strong
-- BC-only already solves the task
-- therefore weaker BC+PPO performance is not well explained by bad demonstrations
+- BC-only is already close to solving the task
+- therefore the remaining BC+PPO gap is not well explained by bad demonstrations
 
-The more likely explanation is that PPO fine-tuning is disturbing an already-good BC policy.
+The more likely explanation is that PPO fine-tuning has less headroom to improve an already-strong BC policy.
 
 ## Bottom line
 
 If we separate the regimes, the answer becomes much cleaner:
 
 1. **Low-demo weakness is plausibly a coverage problem.**
-2. **High-demo underperformance of BC+PPO is not plausibly a coverage problem, because BC-only already succeeds perfectly there.**
-3. The current task appears to have a “middle regime” where imitation prior is good enough to help PPO, but not so complete that PPO becomes unnecessary.
+2. **High-demo behavior is not plausibly a coverage problem, because BC-only is already very strong there.**
+3. The current task appears to have a "middle regime" where imitation prior is good enough to help PPO, but not so complete that PPO becomes unnecessary.
 
 That makes the `50-demo` result more meaningful, not less:
 

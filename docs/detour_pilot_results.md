@@ -2,6 +2,8 @@
 
 This document records the practical lessons from turning the original waypoint benchmark into a harder detour task.
 
+The older pre-alignment comparison artifacts were removed after the BC -> PPO transfer bug was fixed. The trustworthy result set now lives in the aligned rerun documents.
+
 ## What changed
 
 The detour task adds:
@@ -69,15 +71,16 @@ The strongest detour setting so far is:
 
 ## Why this setting matters
 
-Under the final matched `3`-seed setup, scratch PPO stayed at `0.00` mean success, while BC-initialized PPO reached `0.30` mean success on the online `30`-episode evaluations and `0.27` mean success on the stricter `50`-episode best-checkpoint re-evaluations.
+Under the aligned matched `3`-seed setup, scratch PPO stayed at `0.00` mean success, while BC-initialized PPO reached `0.111` mean success with substantially lower final distance (`0.476` vs `0.732`) on the final `30`-episode evaluations.
 
 The final comparison figures are in:
 
-- `artifacts/figures/detour_reward_v2_eval30_matched_compare/`
+- `artifacts/figures/detour_aligned_matched_compare/`
 
 The main report is:
 
 - `docs/experiment_results.md`
+- `docs/normalization_fix_rerun.md`
 
 ## Bottom line
 

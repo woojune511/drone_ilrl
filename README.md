@@ -2,11 +2,11 @@
 
 This repo is a compact drone navigation lab for testing whether imitation learning can make downstream reinforcement learning more sample-efficient.
 
-The current headline result comes from a harder **detour navigation task**: under a matched `300k`-step budget, `BC + PPO` outperformed `PPO from scratch` on success rate, return, and final goal distance.
+The current headline result comes from a harder **detour navigation task**: after fixing the BC -> PPO transfer path, `BC + PPO` still outperformed `PPO from scratch` under a matched `300k`-step budget.
 
 ## Current Result
 
-Final matched comparison:
+Final matched comparison after the transfer fix:
 
 - task: `DetourWaypointVelocityAviary`
 - timesteps: `300,000`
@@ -19,27 +19,19 @@ Final `30`-episode evaluation mean:
 
 | Method | Success | Mean final distance | Mean return |
 |---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.741` | `37.01` |
-| BC + PPO | `0.30` | `0.307` | `124.25` |
-
-Best-checkpoint `50`-episode re-evaluation mean:
-
-| Method | Success | Mean final distance | Mean return |
-|---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.775` | `22.64` |
-| BC + PPO | `0.27` | `0.406` | `91.16` |
+| PPO scratch | `0.00` | `0.732` | `21.15` |
+| BC + PPO | `0.111` | `0.476` | `81.83` |
 
 Main figures:
 
-- `artifacts/figures/detour_reward_v2_eval30_matched_compare/success_rate_vs_steps.png`
-- `artifacts/figures/detour_reward_v2_eval30_matched_compare/final_distance_vs_steps.png`
-- `artifacts/figures/detour_reward_v2_eval30_matched_compare/trajectory_comparison.png`
-- `artifacts/figures/detour_reward_v2_eval30_matched_compare/portfolio_overview.png`
+- `artifacts/figures/detour_aligned_matched_compare/success_rate_vs_steps.png`
+- `artifacts/figures/detour_aligned_matched_compare/final_distance_vs_steps.png`
+- `artifacts/figures/detour_aligned_matched_compare/trajectory_comparison.png`
 
 Detailed write-up:
 
 - `docs/experiment_results.md`
-- `docs/portfolio_summary.md`
+- `docs/normalization_fix_rerun.md`
 
 ## Repo Structure
 

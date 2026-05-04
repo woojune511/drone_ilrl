@@ -46,19 +46,12 @@ Setup:
 - scratch PPO and BC+PPO matched on reward, horizon, and exploration init
 - `log_std_init=-0.5`
 
-### Main result: final `30`-episode evaluation mean
+### Main result: final `30`-episode evaluation mean after the transfer fix
 
 | Method | Success | Mean final distance | Mean return |
 |---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.741` | `37.01` |
-| BC + PPO | `0.30` | `0.307` | `124.25` |
-
-### Conservative result: best checkpoint `50`-episode re-evaluation mean
-
-| Method | Success | Mean final distance | Mean return |
-|---|---:|---:|---:|
-| PPO scratch | `0.00` | `0.775` | `22.64` |
-| BC + PPO | `0.27` | `0.406` | `91.16` |
+| PPO scratch | `0.00` | `0.732` | `21.15` |
+| BC + PPO | `0.111` | `0.476` | `81.83` |
 
 ## Why this result matters
 
@@ -70,11 +63,11 @@ Setup:
 
 ### Direct, metric-heavy
 
-- Built a drone IL->RL benchmark in PyBullet and showed that BC-initialized PPO outperformed scratch PPO on a detour-constrained navigation task, improving final success from `0.00` to `0.30` and reducing mean final goal distance from `0.741m` to `0.307m` under a matched `300k`-step budget.
+- Built a drone IL->RL benchmark in PyBullet and showed that BC-initialized PPO outperformed scratch PPO on a detour-constrained navigation task, improving final success from `0.00` to `0.111` and reducing mean final goal distance from `0.732m` to `0.476m` under a matched `300k`-step budget after fixing BC->PPO transfer alignment.
 
 ### More conservative
 
-- Designed a detour-constrained drone navigation benchmark and evaluation pipeline, then demonstrated that BC-initialized PPO achieved `0.27` mean success across `3` seeds while scratch PPO remained at `0.00`, with mean final distance reduced from `0.775m` to `0.406m`.
+- Designed a detour-constrained drone navigation benchmark and evaluation pipeline, then demonstrated that BC-initialized PPO achieved nonzero mean success across `3` seeds while scratch PPO remained at `0.00`, with mean final distance reduced from `0.732m` to `0.476m` in the aligned rerun.
 
 ### More engineering-focused
 
@@ -89,5 +82,5 @@ If asked what was learned from the project, the strongest answer is:
 ## Key artifacts
 
 - Main report: `docs/experiment_results.md`
-- Matched comparison figures: `artifacts/figures/detour_reward_v2_eval30_matched_compare/`
-- Overview image: `artifacts/figures/detour_reward_v2_eval30_matched_compare/portfolio_overview.png`
+- Matched comparison figures: `artifacts/figures/detour_aligned_matched_compare/`
+- Main rerun note: `docs/normalization_fix_rerun.md`
