@@ -4,6 +4,10 @@
 
 Built an imitation-learning-to-reinforcement-learning pipeline for drone navigation, diagnosed BC-to-PPO distribution shift, and improved detour-task success over BC-only using expert-state augmentation with scripted relabeling.
 
+## Claim boundary
+
+The main claim is not that PPO automatically improves a BC policy. The evidence showed the opposite for the naive version: PPO could preserve or damage the BC prior depending on regularization and training stage. The defensible claim is that after measuring the distribution-shift failure mode, adding local expert-state recovery supervision during PPO improved average success and final distance over BC-only under the same `50`-episode evaluation protocol.
+
 ## Problem
 
 The original waypoint task was too PPO-friendly:
@@ -56,6 +60,13 @@ Setup:
 | BC+PPO expert-state aug best | `0.792 +/- 0.104` | `0.153 +/- 0.041` | `81.00 +/- 10.79` |
 
 This is the current portfolio headline because it shows not just BC initialization, but a targeted fix for the BC -> PPO distribution-shift failure mode.
+
+What PPO added in the final method:
+
+- online interaction still updated the policy through PPO
+- auxiliary expert-state loss constrained local recovery near demonstration states
+- scripted relabeling made augmented states carry corrective actions, not stale demonstration actions
+- validation-best selection exposed the useful checkpoint while final-checkpoint reporting kept the late-drift limitation visible
 
 ## Earlier matched experiment
 
@@ -156,6 +167,10 @@ Interpretation: seed `31` is not primarily a wall-navigation or exploration fail
 
 - Designed a detour-constrained drone navigation benchmark and evaluation pipeline, then showed that expert-state augmentation with scripted relabeling improved BC-initialized PPO over standalone BC under a shared `50`-episode protocol, reducing mean final distance from `0.269m` to `0.153m`.
 
+### Most defensible
+
+- Diagnosed BC-to-PPO distribution shift in a detour-constrained drone navigation task and improved BC-initialized PPO over a standalone BC baseline by adding expert-state augmentation with scripted relabeling, raising validation-best success from `0.54` to `0.792 +/- 0.104` across `5` PPO seeds.
+
 ### More engineering-focused
 
 - Implemented a drone imitation-learning and PPO fine-tuning pipeline with custom PyBullet tasks, scripted expert rollout collection, BC actor initialization, auxiliary expert losses, state augmentation, checkpoint selection, and experiment visualization to study stable IL->RL transfer.
@@ -165,6 +180,10 @@ Interpretation: seed `31` is not primarily a wall-navigation or exploration fail
 If asked what was learned from the project, the strongest answer is:
 
 > The main lesson was that getting BC initialization correct was only the first step. After I fixed the BC-to-PPO transfer so the initial policies matched exactly, the real bottleneck became distribution shift during PPO fine-tuning. KL regularization and actor freezing mostly preserved BC, but did not improve it. The improvement came from adding local recovery supervision: perturbing expert trajectory states, recomputing task features, rejecting invalid wall states, and relabeling actions with the scripted expert. That moved the result from BC-only `0.54` success to `0.792` validation-best success across five PPO seeds, while also exposing the remaining weakness as late-training final-approach drift.
+
+If challenged on whether PPO itself improved the policy, the precise answer is:
+
+> PPO alone was not enough. The meaningful result is that PPO became useful only after I added a supervised recovery signal on augmented expert states. KL/freeze preserved the BC prior, but expert-state augmentation gave PPO a safer local region to explore around the demonstration manifold. I still report final checkpoints separately because late PPO updates can degrade settling behavior.
 
 ## Key artifacts
 

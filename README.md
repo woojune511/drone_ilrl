@@ -4,6 +4,8 @@ This repo is a compact drone navigation lab for testing whether imitation learni
 
 The headline result comes from a harder **detour navigation task**. Plain BC can solve part of the task, but PPO fine-tuning initially suffered from BC -> PPO distribution shift. The strongest current method adds local expert-state augmentation with scripted expert relabeling during PPO updates.
 
+The intended claim is narrow and reproducible: PPO did not improve BC by default. It improved after the distribution-shift failure mode was measured and the PPO update was given local expert-state recovery supervision.
+
 ## Current Result
 
 Final portfolio comparison:
@@ -30,6 +32,12 @@ Interpretation:
 - KL/freeze mostly preserves BC behavior instead of improving it.
 - Expert-state augmentation plus expert relabeling gives PPO local recovery supervision around the demonstration manifold.
 - Validation-best checkpoint selection is part of the official protocol because late PPO updates can still degrade final approach behavior.
+
+Claim boundary:
+
+- This is not presented as a pure RL-from-scratch win.
+- The expert-state augmentation still uses the scripted expert during training.
+- The main contribution is diagnosing why naive BC -> PPO transfer was unstable and showing a targeted mitigation that improves average success and final distance under the shared evaluation protocol.
 
 Main figures:
 
