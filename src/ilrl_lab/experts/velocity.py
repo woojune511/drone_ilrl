@@ -180,3 +180,44 @@ def detour_planar_velocity_expert(
         dtype=np.float32,
     )
     return np.clip(action, -1.0, 1.0).astype(np.float32)
+
+
+def detour_planar_local_obs_expert(
+    observation: np.ndarray,
+    kp: float = 1.8,
+    kd: float = 0.25,
+    yaw_kp: float = 1.5,
+    max_planar_speed: float = 0.35,
+    max_yaw_rate: float = np.pi / 3.0,
+    stop_radius: float = 0.05,
+) -> np.ndarray:
+    """Expert for DetourPlanarLocalObsAviary's 15D local observation."""
+
+    obs = np.asarray(observation, dtype=np.float32)
+    body_vel_xy = obs[0:2]
+    rel_detour_target_body = obs[9:12]
+    target_xy_body = rel_detour_target_body[0:2]
+    distance = float(np.linalg.norm(rel_detour_target_body))
+
+    if distance < stop_radius:
+        return np.zeros(3, dtype=np.float32)
+
+    desired_body_xy = kp * target_xy_body - kd * body_vel_xy
+    speed = float(np.linalg.norm(desired_body_xy))
+    if speed > max_planar_speed:
+        desired_body_xy = desired_body_xy / speed * max_planar_speed
+        speed = max_planar_speed
+    if speed < 1e-6:
+        return np.zeros(3, dtype=np.float32)
+
+    yaw_error = float(np.arctan2(desired_body_xy[1], desired_body_xy[0]))
+    yaw_rate = np.clip(yaw_kp * yaw_error, -max_yaw_rate, max_yaw_rate)
+    action = np.array(
+        [
+            desired_body_xy[0] / max_planar_speed,
+            desired_body_xy[1] / max_planar_speed,
+            yaw_rate / max_yaw_rate,
+        ],
+        dtype=np.float32,
+    )
+    return np.clip(action, -1.0, 1.0).astype(np.float32)

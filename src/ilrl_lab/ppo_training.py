@@ -16,8 +16,14 @@ from stable_baselines3.common.utils import explained_variance
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from ilrl_lab.bc import BehaviorCloningPolicy, load_bc_checkpoint
-from ilrl_lab.envs import DetourPlanarVelocityAviary, DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.envs import (
+    DetourPlanarLocalObsAviary,
+    DetourPlanarVelocityAviary,
+    DetourWaypointVelocityAviary,
+    WaypointVelocityAviary,
+)
 from ilrl_lab.experts import (
+    detour_planar_local_obs_expert,
     detour_planar_velocity_expert,
     detour_waypoint_velocity_expert,
     waypoint_velocity_expert,
@@ -265,6 +271,8 @@ class BCKLRegularizedPPO(PPO):
 
 
 def make_env_instance(task_variant: str, gui: bool):
+    if task_variant == "detour_planar_local":
+        return DetourPlanarLocalObsAviary(gui=gui)
     if task_variant == "detour_planar":
         return DetourPlanarVelocityAviary(gui=gui)
     if task_variant == "detour":
@@ -275,6 +283,8 @@ def make_env_instance(task_variant: str, gui: bool):
 
 
 def expert_for_task_variant(task_variant: str):
+    if task_variant == "detour_planar_local":
+        return detour_planar_local_obs_expert
     if task_variant == "detour_planar":
         return detour_planar_velocity_expert
     if task_variant == "detour":
@@ -519,6 +529,8 @@ def build_expert_bc_training_arrays(
     actions = np.asarray(actions, dtype=np.float32)
     if augment_copies <= 0:
         return observations.copy(), actions.copy()
+    if task_variant == "detour_planar_local":
+        raise ValueError("Expert-state augmentation is not implemented for detour_planar_local's 15D observation layout.")
 
     rng = np.random.default_rng(seed)
     expert = expert_for_task_variant(task_variant)
@@ -564,7 +576,7 @@ def _valid_augmented_observation_mask(observations: np.ndarray, task_variant: st
         & (pos[:, 2] >= 0.10)
         & (pos[:, 2] <= 1.10)
     )
-    if task_variant not in {"detour", "detour_planar"}:
+    if task_variant not in {"detour", "detour_planar", "detour_planar_local"}:
         return mask
 
     wall_x = 0.0

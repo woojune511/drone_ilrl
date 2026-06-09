@@ -53,6 +53,7 @@ Detailed write-up:
 - `docs/interview_qa.md`
 - `docs/action_space_roadmap.md`
 - `docs/detour_planar_bc_baseline.md`
+- `docs/detour_planar_local_bc_baseline.md`
 - `docs/submission_file_manifest.md`
 - `docs/bc_to_ppo_distribution_shift.md`
 - `docs/experiment_results.md`
@@ -206,6 +207,23 @@ Initial clean BC baseline for this variant:
 - BC mean final distance: `0.055m`
 
 See `docs/detour_planar_bc_baseline.md`.
+
+Next observation-reduction variant:
+
+```bash
+uv run --all-extras python scripts/collect_expert_rollouts.py \
+  --task-variant detour_planar_local \
+  --episodes 20 \
+  --quality-tag clean_planar_local
+```
+
+Initial clean BC baseline for this local-observation variant:
+
+- expert success: `1.0`
+- BC success: `1.0` over `50` deterministic episodes
+- BC mean final distance: `0.066m`
+
+See `docs/detour_planar_local_bc_baseline.md`.
 
 ### Run the main detour seed sweep
 

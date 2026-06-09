@@ -58,6 +58,28 @@ The environment maps this to PID targets:
 
 The original `detour` task remains unchanged for reproducing the portfolio result.
 
+## First Observation Reduction
+
+`DetourPlanarLocalObsAviary` keeps the same action interface and detour task, but removes absolute position and absolute goal from the policy observation:
+
+```bash
+--task-variant detour_planar_local
+```
+
+Observation layout:
+
+```text
+body_vel_xy(2)
+altitude_error(1)
+z_vel(1)
+sin_yaw, cos_yaw(2)
+rel_goal_body_xyz(3)
+rel_detour_target_body_xyz(3)
+previous_action(3)
+```
+
+This is not depth-only perception. It is a route-conditioned local tracking interface: a simple upstream planner still provides the local detour target. The purpose is to remove global privileged coordinates before moving to harder perception.
+
 ## Experimental Order
 
 Change one axis at a time:
@@ -66,13 +88,14 @@ Change one axis at a time:
 2. Switch only the action interface to `detour_planar`.
 3. Collect clean scripted demonstrations with `detour_planar_velocity_expert`.
 4. Train BC and confirm that clean imitation works.
-5. Fine-tune with PPO only after BC is stable.
-6. Then reduce observation information toward partial observability.
-7. Only after that, expand task complexity or inject human-like data noise.
+5. Switch only the observation interface to `detour_planar_local`.
+6. Train BC and confirm that local route-conditioned imitation works.
+7. Fine-tune with PPO only after BC is stable.
+8. Then replace local route-conditioned state with depth-like perception.
+9. Only after that, expand task complexity or inject human-like data noise.
 
 Avoid changing action space, observation space, task difficulty, and data quality in the same experiment. If learning fails, the cause becomes ambiguous.
 
 ## Why Not Keyboard Discrete Actions First?
 
 Discrete keyboard actions are useful for analyzing the old AirSim prototype, but they are not the most realistic control interface for deployment. A real drone stack is more likely to expose a bounded velocity or body-rate offboard API. For this project, constrained body-frame velocity is a better next step because it is both realistic and still simple enough for controlled experiments.
-

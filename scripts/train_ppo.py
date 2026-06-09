@@ -59,7 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gui", action="store_true", help="Enable GUI for the training environment.")
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour", "detour_planar"],
+        choices=["waypoint", "detour", "detour_planar", "detour_planar_local"],
         default="waypoint",
         help="Environment variant to train on.",
     )

@@ -189,3 +189,70 @@ class DetourPlanarVelocityAviary(DetourWaypointVelocityAviary):
             if int(contact[2]) in obstacle_ids:
                 return True
         return False
+
+
+class DetourPlanarLocalObsAviary(DetourPlanarVelocityAviary):
+    """Planar detour task with local, route-conditioned observations.
+
+    This variant removes absolute position and absolute goal from the policy
+    observation. It keeps a local detour target vector, which corresponds to a
+    simple upstream route planner rather than raw perception.
+
+    Observation layout:
+    body_vel_xy(2), altitude_error(1), z_vel(1), sin_yaw/cos_yaw(2),
+    rel_goal_body_xyz(3), rel_detour_target_body_xyz(3), previous_action(3).
+    """
+
+    def _observationSpace(self):
+        return spaces.Box(
+            low=np.full(15, -np.inf, dtype=np.float32),
+            high=np.full(15, np.inf, dtype=np.float32),
+            dtype=np.float32,
+        )
+
+    def _computeObs(self):
+        state = self._getDroneStateVector(0)
+        pos = state[0:3].astype(np.float32)
+        yaw = float(state[9])
+        vel = state[10:13].astype(np.float32)
+
+        stage, detour_target = self._detour_navigation_target(pos)
+        _ = stage
+
+        body_vel_xy = self._world_xy_to_body_xy(vel[0:2], yaw)
+        rel_goal_body = self._world_xyz_to_body_xyz(self.target_pos - pos, yaw)
+        rel_detour_target_body = self._world_xyz_to_body_xyz(detour_target - pos, yaw)
+        obs = np.concatenate(
+            [
+                body_vel_xy,
+                np.array([self.hold_altitude - pos[2], vel[2]], dtype=np.float32),
+                np.array([np.sin(yaw), np.cos(yaw)], dtype=np.float32),
+                rel_goal_body,
+                rel_detour_target_body,
+                self._last_policy_action.astype(np.float32),
+            ]
+        )
+        return obs.astype(np.float32)
+
+    def _build_info(self, success: bool) -> dict[str, float | bool | list[float]]:
+        info = super()._build_info(success)
+        info["task_variant"] = "detour_planar_local_obs"
+        info["observation_variant"] = "local_detour_target"
+        return info
+
+    @staticmethod
+    def _world_xy_to_body_xy(vector_xy: np.ndarray, yaw: float) -> np.ndarray:
+        cos_yaw = float(np.cos(yaw))
+        sin_yaw = float(np.sin(yaw))
+        return np.array(
+            [
+                cos_yaw * vector_xy[0] + sin_yaw * vector_xy[1],
+                -sin_yaw * vector_xy[0] + cos_yaw * vector_xy[1],
+            ],
+            dtype=np.float32,
+        )
+
+    @classmethod
+    def _world_xyz_to_body_xyz(cls, vector_xyz: np.ndarray, yaw: float) -> np.ndarray:
+        body_xy = cls._world_xy_to_body_xy(vector_xyz[0:2], yaw)
+        return np.array([body_xy[0], body_xy[1], vector_xyz[2]], dtype=np.float32)
