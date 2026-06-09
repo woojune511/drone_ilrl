@@ -52,6 +52,7 @@ Detailed write-up:
 - `docs/portfolio_one_page.md`
 - `docs/interview_qa.md`
 - `docs/action_space_roadmap.md`
+- `docs/detour_planar_bc_baseline.md`
 - `docs/submission_file_manifest.md`
 - `docs/bc_to_ppo_distribution_shift.md`
 - `docs/experiment_results.md`
@@ -197,6 +198,14 @@ uv run --all-extras python scripts/collect_expert_rollouts.py \
   --episodes 20 \
   --quality-tag clean_planar
 ```
+
+Initial clean BC baseline for this variant:
+
+- expert success: `1.0`
+- BC success: `1.0` over `50` deterministic episodes
+- BC mean final distance: `0.055m`
+
+See `docs/detour_planar_bc_baseline.md`.
 
 ### Run the main detour seed sweep
 
