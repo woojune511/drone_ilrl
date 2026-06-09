@@ -51,6 +51,7 @@ Detailed write-up:
 - `docs/portfolio_summary.md`
 - `docs/portfolio_one_page.md`
 - `docs/interview_qa.md`
+- `docs/action_space_roadmap.md`
 - `docs/submission_file_manifest.md`
 - `docs/bc_to_ppo_distribution_shift.md`
 - `docs/experiment_results.md`
@@ -61,6 +62,7 @@ Detailed write-up:
 
 - `src/ilrl_lab/envs/waypoint_vel_aviary.py`: base waypoint-reaching task
 - `src/ilrl_lab/envs/detour_vel_aviary.py`: harder detour-constrained task
+- `src/ilrl_lab/envs/detour_planar_vel_aviary.py`: detour task with body-frame planar velocity, yaw-rate, and altitude hold
 - `src/ilrl_lab/experts/velocity.py`: waypoint and detour scripted experts
 - `src/ilrl_lab/bc.py`: behavior cloning policy
 - `src/ilrl_lab/ppo_training.py`: PPO helpers, BC actor init, weak BC regularization
@@ -183,6 +185,17 @@ Batch script for the current best variant:
 ```bash
 RUN_AUG003=0 RUN_AUG005=1 SEEDS="7 11 19 23 31" \
   scripts/run_detour_expert_bc_aug_ablation.sh artifacts/checkpoints/bc/bc_20260608_132020/checkpoint.pt
+```
+
+### Try the deployment-oriented planar action variant
+
+This keeps the detour task but changes the policy-facing action to body-frame planar velocity plus yaw-rate. Altitude is held by the low-level controller.
+
+```bash
+uv run --all-extras python scripts/collect_expert_rollouts.py \
+  --task-variant detour_planar \
+  --episodes 20 \
+  --quality-tag clean_planar
 ```
 
 ### Run the main detour seed sweep

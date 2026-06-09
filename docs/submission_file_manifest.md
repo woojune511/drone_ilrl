@@ -8,11 +8,13 @@ This project is intended to present a compact IL -> RL pipeline for a detour nav
 - `docs/portfolio_one_page.md`: one-page interview/portfolio summary.
 - `docs/portfolio_summary.md`: expanded result summary and framing.
 - `docs/interview_qa.md`: prepared answers for likely technical interview questions.
+- `docs/action_space_roadmap.md`: next-step plan for a deployment-oriented drone action interface.
 - `docs/bc_to_ppo_distribution_shift.md`: technical diagnosis of BC -> PPO distribution shift and mitigation attempts.
 
 ## Core Implementation
 
 - `src/ilrl_lab/envs/detour_vel_aviary.py`: detour wall environment.
+- `src/ilrl_lab/envs/detour_planar_vel_aviary.py`: follow-up detour variant with body-frame planar velocity, yaw-rate, and altitude hold.
 - `src/ilrl_lab/envs/waypoint_vel_aviary.py`: velocity waypoint base environment.
 - `src/ilrl_lab/experts/velocity.py`: scripted velocity experts.
 - `src/ilrl_lab/ppo_training.py`: PPO, BC initialization, BC-KL regularization, and expert-state BC loss.

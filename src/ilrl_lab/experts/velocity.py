@@ -3,6 +3,10 @@ from __future__ import annotations
 import numpy as np
 
 
+def _wrap_angle(angle: float) -> float:
+    return float((angle + np.pi) % (2.0 * np.pi) - np.pi)
+
+
 def waypoint_velocity_expert(
     observation: np.ndarray,
     kp: float = 1.25,
@@ -97,4 +101,82 @@ def detour_waypoint_velocity_expert(
     direction = desired_velocity / speed
     speed_scale = np.clip(speed / max_speed, 0.0, 1.0)
     action = np.concatenate([direction, np.array([speed_scale], dtype=np.float32)])
+    return np.clip(action, -1.0, 1.0).astype(np.float32)
+
+
+def detour_planar_velocity_expert(
+    observation: np.ndarray,
+    kp: float = 1.8,
+    kd: float = 0.25,
+    yaw_kp: float = 1.5,
+    max_planar_speed: float = 0.35,
+    max_yaw_rate: float = np.pi / 3.0,
+    stop_radius: float = 0.05,
+    corridor_center_y: float = 0.50,
+    wall_x: float = 0.0,
+    entry_x: float = -0.18,
+    exit_x: float = 0.22,
+    corridor_y_tolerance: float = 0.10,
+    exit_margin_x: float = 0.03,
+    intermediate_stop_radius: float = 0.015,
+) -> np.ndarray:
+    """Expert for the deployment-oriented 3D planar velocity action space.
+
+    Returns normalized body-frame vx, body-frame vy, and yaw-rate.
+    Altitude is controlled by the environment, so the expert plans in xy.
+    """
+
+    obs = np.asarray(observation, dtype=np.float32)
+    pos = obs[0:3]
+    yaw = float(obs[5])
+    vel_xy = obs[6:8]
+    goal = obs[12:15]
+
+    target_xy = goal[0:2].copy()
+    using_intermediate_target = False
+    corridor_aligned = abs(float(pos[1]) - corridor_center_y) <= corridor_y_tolerance
+
+    if goal[0] > wall_x:
+        if pos[0] < wall_x - 0.05:
+            if not corridor_aligned:
+                target_xy = np.array([entry_x, corridor_center_y], dtype=np.float32)
+                using_intermediate_target = True
+            else:
+                target_xy = np.array([exit_x, corridor_center_y], dtype=np.float32)
+                using_intermediate_target = True
+        elif pos[0] < exit_x - exit_margin_x:
+            target_xy = np.array([exit_x, corridor_center_y], dtype=np.float32)
+            using_intermediate_target = True
+
+    rel_xy = target_xy - pos[0:2]
+    distance = float(np.linalg.norm(rel_xy))
+    active_stop_radius = intermediate_stop_radius if using_intermediate_target else stop_radius
+    if distance < active_stop_radius:
+        return np.zeros(3, dtype=np.float32)
+
+    desired_world_xy = kp * rel_xy - kd * vel_xy
+    speed = float(np.linalg.norm(desired_world_xy))
+    if speed > max_planar_speed:
+        desired_world_xy = desired_world_xy / speed * max_planar_speed
+        speed = max_planar_speed
+    if speed < 1e-6:
+        return np.zeros(3, dtype=np.float32)
+
+    cos_yaw = float(np.cos(yaw))
+    sin_yaw = float(np.sin(yaw))
+    body_vx = cos_yaw * desired_world_xy[0] + sin_yaw * desired_world_xy[1]
+    body_vy = -sin_yaw * desired_world_xy[0] + cos_yaw * desired_world_xy[1]
+
+    desired_heading = float(np.arctan2(desired_world_xy[1], desired_world_xy[0]))
+    yaw_error = _wrap_angle(desired_heading - yaw)
+    yaw_rate = np.clip(yaw_kp * yaw_error, -max_yaw_rate, max_yaw_rate)
+
+    action = np.array(
+        [
+            body_vx / max_planar_speed,
+            body_vy / max_planar_speed,
+            yaw_rate / max_yaw_rate,
+        ],
+        dtype=np.float32,
+    )
     return np.clip(action, -1.0, 1.0).astype(np.float32)

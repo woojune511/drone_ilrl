@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from ilrl_lab.bc import load_bc_checkpoint, normalize_obs, predict_action
-from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.envs import DetourPlanarVelocityAviary, DetourWaypointVelocityAviary, WaypointVelocityAviary
 from ilrl_lab.ppo_training import build_ppo_model, initialize_actor_from_bc
 
 
@@ -29,7 +29,7 @@ class Args:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check BC->PPO initialization alignment on sampled states.")
     parser.add_argument("--bc-checkpoint", type=Path, required=True)
-    parser.add_argument("--task-variant", choices=["waypoint", "detour"], default="detour")
+    parser.add_argument("--task-variant", choices=["waypoint", "detour", "detour_planar"], default="detour")
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--seed", type=int, default=70000)
     parser.add_argument("--max-states", type=int, default=512)
@@ -43,6 +43,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def make_env(task_variant: str):
+    if task_variant == "detour_planar":
+        return DetourPlanarVelocityAviary(gui=False)
     if task_variant == "detour":
         return DetourWaypointVelocityAviary(gui=False)
     return WaypointVelocityAviary(gui=False)

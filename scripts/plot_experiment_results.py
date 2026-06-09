@@ -12,8 +12,12 @@ import torch
 from stable_baselines3 import PPO
 
 from ilrl_lab.bc import load_bc_checkpoint, predict_action
-from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
-from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
+from ilrl_lab.envs import DetourPlanarVelocityAviary, DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.experts import (
+    detour_planar_velocity_expert,
+    detour_waypoint_velocity_expert,
+    waypoint_velocity_expert,
+)
 from ilrl_lab.ppo_training import FixedObservationNormalization
 
 
@@ -31,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trajectory-seed", type=int, default=123)
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour"],
+        choices=["waypoint", "detour", "detour_planar"],
         default="waypoint",
         help="Environment/expert variant used for trajectory rollouts.",
     )
@@ -50,6 +54,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def make_env(task_variant: str):
+    if task_variant == "detour_planar":
+        return DetourPlanarVelocityAviary(gui=False)
     if task_variant == "detour":
         return DetourWaypointVelocityAviary(gui=False)
     if task_variant == "waypoint":
@@ -58,6 +64,8 @@ def make_env(task_variant: str):
 
 
 def expert_policy(task_variant: str):
+    if task_variant == "detour_planar":
+        return detour_planar_velocity_expert
     if task_variant == "detour":
         return detour_waypoint_velocity_expert
     if task_variant == "waypoint":

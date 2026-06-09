@@ -16,8 +16,12 @@ from stable_baselines3.common.utils import explained_variance
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from ilrl_lab.bc import BehaviorCloningPolicy, load_bc_checkpoint
-from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
-from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
+from ilrl_lab.envs import DetourPlanarVelocityAviary, DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.experts import (
+    detour_planar_velocity_expert,
+    detour_waypoint_velocity_expert,
+    waypoint_velocity_expert,
+)
 
 
 class FixedObservationNormalization(gym.ObservationWrapper):
@@ -261,10 +265,22 @@ class BCKLRegularizedPPO(PPO):
 
 
 def make_env_instance(task_variant: str, gui: bool):
+    if task_variant == "detour_planar":
+        return DetourPlanarVelocityAviary(gui=gui)
     if task_variant == "detour":
         return DetourWaypointVelocityAviary(gui=gui)
     if task_variant == "waypoint":
         return WaypointVelocityAviary(gui=gui)
+    raise ValueError(f"Unsupported task variant: {task_variant}")
+
+
+def expert_for_task_variant(task_variant: str):
+    if task_variant == "detour_planar":
+        return detour_planar_velocity_expert
+    if task_variant == "detour":
+        return detour_waypoint_velocity_expert
+    if task_variant == "waypoint":
+        return waypoint_velocity_expert
     raise ValueError(f"Unsupported task variant: {task_variant}")
 
 
@@ -459,7 +475,7 @@ def build_bc_probe(
     bc_model, _, _, _ = load_bc_checkpoint(bc_checkpoint, torch.device("cpu"))
     bc_model.eval()
     env = make_env_instance(task_variant, gui=False)
-    expert = detour_waypoint_velocity_expert if task_variant == "detour" else waypoint_velocity_expert
+    expert = expert_for_task_variant(task_variant)
     observations: list[np.ndarray] = []
     try:
         for episode_idx in range(episodes):
@@ -505,7 +521,7 @@ def build_expert_bc_training_arrays(
         return observations.copy(), actions.copy()
 
     rng = np.random.default_rng(seed)
-    expert = detour_waypoint_velocity_expert if task_variant == "detour" else waypoint_velocity_expert
+    expert = expert_for_task_variant(task_variant)
     obs_batches = [observations.copy()]
     action_batches = [actions.copy()]
 
@@ -548,7 +564,7 @@ def _valid_augmented_observation_mask(observations: np.ndarray, task_variant: st
         & (pos[:, 2] >= 0.10)
         & (pos[:, 2] <= 1.10)
     )
-    if task_variant != "detour":
+    if task_variant not in {"detour", "detour_planar"}:
         return mask
 
     wall_x = 0.0

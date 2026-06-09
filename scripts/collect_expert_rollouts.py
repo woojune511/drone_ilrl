@@ -7,11 +7,17 @@ from pathlib import Path
 
 import numpy as np
 
-from ilrl_lab.envs import DetourWaypointVelocityAviary, WaypointVelocityAviary
-from ilrl_lab.experts import detour_waypoint_velocity_expert, waypoint_velocity_expert
+from ilrl_lab.envs import DetourPlanarVelocityAviary, DetourWaypointVelocityAviary, WaypointVelocityAviary
+from ilrl_lab.experts import (
+    detour_planar_velocity_expert,
+    detour_waypoint_velocity_expert,
+    waypoint_velocity_expert,
+)
 
 
 def build_env_and_expert(task_variant: str, gui: bool):
+    if task_variant == "detour_planar":
+        return DetourPlanarVelocityAviary(gui=gui), detour_planar_velocity_expert
     if task_variant == "detour":
         return DetourWaypointVelocityAviary(gui=gui), detour_waypoint_velocity_expert
     if task_variant == "waypoint":
@@ -28,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gui", action="store_true", help="Run PyBullet with GUI enabled.")
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour"],
+        choices=["waypoint", "detour", "detour_planar"],
         default="waypoint",
         help="Task variant and matching expert to use for collection.",
     )
