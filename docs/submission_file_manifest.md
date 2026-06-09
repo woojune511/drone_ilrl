@@ -7,6 +7,7 @@ This project is intended to present a compact IL -> RL pipeline for a detour nav
 - `README.md`: entry point, headline result, reproduction commands.
 - `docs/portfolio_one_page.md`: one-page interview/portfolio summary.
 - `docs/portfolio_summary.md`: expanded result summary and framing.
+- `docs/interview_qa.md`: prepared answers for likely technical interview questions.
 - `docs/bc_to_ppo_distribution_shift.md`: technical diagnosis of BC -> PPO distribution shift and mitigation attempts.
 
 ## Core Implementation
@@ -53,4 +54,3 @@ This project is intended to present a compact IL -> RL pipeline for a detour nav
 - BC-only: 54.0% success over 50 evaluation episodes.
 - BC + PPO expert-state augmentation, final checkpoint mean over 5 seeds: 72.8% success.
 - BC + PPO expert-state augmentation, validation-best checkpoint mean over 5 seeds: 79.2% success.
-

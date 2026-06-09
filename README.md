@@ -50,6 +50,7 @@ Detailed write-up:
 
 - `docs/portfolio_summary.md`
 - `docs/portfolio_one_page.md`
+- `docs/interview_qa.md`
 - `docs/submission_file_manifest.md`
 - `docs/bc_to_ppo_distribution_shift.md`
 - `docs/experiment_results.md`
