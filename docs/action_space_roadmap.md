@@ -80,6 +80,36 @@ previous_action(3)
 
 This is not depth-only perception. It is a route-conditioned local tracking interface: a simple upstream planner still provides the local detour target. The purpose is to remove global privileged coordinates before moving to harder perception.
 
+## Raycast Observation Variant
+
+`DetourPlanarRaycastAviary` removes the local detour target and replaces it with low-dimensional horizontal ray distances:
+
+```bash
+--task-variant detour_planar_raycast
+```
+
+Observation layout:
+
+```text
+body_vel_xy(2)
+altitude_error(1)
+z_vel(1)
+sin_yaw, cos_yaw(2)
+rel_goal_body_xyz(3)
+previous_action(3)
+raycast_distances(21)
+```
+
+The teacher remains privileged: demonstrations are labeled by the full-state scripted expert, while the student policy only observes raycast distances and goal-relative local state.
+
+Initial result:
+
+- expert success: `1.0`
+- BC success: `0.84`
+- BC mean final distance: `0.245m`
+
+This is the first follow-up setting with meaningful headroom beyond BC.
+
 ## Experimental Order
 
 Change one axis at a time:
@@ -90,9 +120,10 @@ Change one axis at a time:
 4. Train BC and confirm that clean imitation works.
 5. Switch only the observation interface to `detour_planar_local`.
 6. Train BC and confirm that local route-conditioned imitation works.
-7. Fine-tune with PPO only after BC is stable.
-8. Then replace local route-conditioned state with depth-like perception.
-9. Only after that, expand task complexity or inject human-like data noise.
+7. Replace local route-conditioned state with `detour_planar_raycast`.
+8. Inspect BC failure modes.
+9. Fine-tune with PPO or compare AWAC/IQL only after raycast BC failure modes are understood.
+10. Only after that, expand task complexity or inject human-like data noise.
 
 Avoid changing action space, observation space, task difficulty, and data quality in the same experiment. If learning fails, the cause becomes ambiguous.
 

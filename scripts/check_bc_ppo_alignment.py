@@ -10,6 +10,7 @@ import torch
 from ilrl_lab.bc import load_bc_checkpoint, normalize_obs, predict_action
 from ilrl_lab.envs import (
     DetourPlanarLocalObsAviary,
+    DetourPlanarRaycastAviary,
     DetourPlanarVelocityAviary,
     DetourWaypointVelocityAviary,
     WaypointVelocityAviary,
@@ -36,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bc-checkpoint", type=Path, required=True)
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour", "detour_planar", "detour_planar_local"],
+        choices=["waypoint", "detour", "detour_planar", "detour_planar_local", "detour_planar_raycast"],
         default="detour",
     )
     parser.add_argument("--episodes", type=int, default=20)
@@ -52,6 +53,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def make_env(task_variant: str):
+    if task_variant == "detour_planar_raycast":
+        return DetourPlanarRaycastAviary(gui=False)
     if task_variant == "detour_planar_local":
         return DetourPlanarLocalObsAviary(gui=False)
     if task_variant == "detour_planar":

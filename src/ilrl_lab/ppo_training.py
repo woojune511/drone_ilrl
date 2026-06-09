@@ -18,6 +18,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from ilrl_lab.bc import BehaviorCloningPolicy, load_bc_checkpoint
 from ilrl_lab.envs import (
     DetourPlanarLocalObsAviary,
+    DetourPlanarRaycastAviary,
     DetourPlanarVelocityAviary,
     DetourWaypointVelocityAviary,
     WaypointVelocityAviary,
@@ -271,6 +272,8 @@ class BCKLRegularizedPPO(PPO):
 
 
 def make_env_instance(task_variant: str, gui: bool):
+    if task_variant == "detour_planar_raycast":
+        return DetourPlanarRaycastAviary(gui=gui)
     if task_variant == "detour_planar_local":
         return DetourPlanarLocalObsAviary(gui=gui)
     if task_variant == "detour_planar":
@@ -283,6 +286,8 @@ def make_env_instance(task_variant: str, gui: bool):
 
 
 def expert_for_task_variant(task_variant: str):
+    if task_variant == "detour_planar_raycast":
+        raise ValueError("detour_planar_raycast requires an env-bound privileged expert.")
     if task_variant == "detour_planar_local":
         return detour_planar_local_obs_expert
     if task_variant == "detour_planar":
@@ -292,6 +297,12 @@ def expert_for_task_variant(task_variant: str):
     if task_variant == "waypoint":
         return waypoint_velocity_expert
     raise ValueError(f"Unsupported task variant: {task_variant}")
+
+
+def expert_action_for_env(env: Any, task_variant: str, observation: np.ndarray) -> np.ndarray:
+    if hasattr(env, "privileged_expert_action"):
+        return env.privileged_expert_action()
+    return expert_for_task_variant(task_variant)(observation)
 
 
 @dataclass
@@ -485,7 +496,6 @@ def build_bc_probe(
     bc_model, _, _, _ = load_bc_checkpoint(bc_checkpoint, torch.device("cpu"))
     bc_model.eval()
     env = make_env_instance(task_variant, gui=False)
-    expert = expert_for_task_variant(task_variant)
     observations: list[np.ndarray] = []
     try:
         for episode_idx in range(episodes):
@@ -493,7 +503,7 @@ def build_bc_probe(
             for step_idx in range(max_steps_per_episode):
                 if step_idx % stride == 0:
                     observations.append(np.asarray(obs, dtype=np.float32).copy())
-                obs, _, terminated, truncated, _ = env.step(expert(obs))
+                obs, _, terminated, truncated, _ = env.step(expert_action_for_env(env, task_variant, obs))
                 if terminated or truncated:
                     break
     finally:
@@ -529,8 +539,8 @@ def build_expert_bc_training_arrays(
     actions = np.asarray(actions, dtype=np.float32)
     if augment_copies <= 0:
         return observations.copy(), actions.copy()
-    if task_variant == "detour_planar_local":
-        raise ValueError("Expert-state augmentation is not implemented for detour_planar_local's 15D observation layout.")
+    if task_variant in {"detour_planar_local", "detour_planar_raycast"}:
+        raise ValueError(f"Expert-state augmentation is not implemented for {task_variant}'s observation layout.")
 
     rng = np.random.default_rng(seed)
     expert = expert_for_task_variant(task_variant)
@@ -576,7 +586,7 @@ def _valid_augmented_observation_mask(observations: np.ndarray, task_variant: st
         & (pos[:, 2] >= 0.10)
         & (pos[:, 2] <= 1.10)
     )
-    if task_variant not in {"detour", "detour_planar", "detour_planar_local"}:
+    if task_variant not in {"detour", "detour_planar", "detour_planar_local", "detour_planar_raycast"}:
         return mask
 
     wall_x = 0.0

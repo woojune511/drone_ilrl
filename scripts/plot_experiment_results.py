@@ -14,6 +14,7 @@ from stable_baselines3 import PPO
 from ilrl_lab.bc import load_bc_checkpoint, predict_action
 from ilrl_lab.envs import (
     DetourPlanarLocalObsAviary,
+    DetourPlanarRaycastAviary,
     DetourPlanarVelocityAviary,
     DetourWaypointVelocityAviary,
     WaypointVelocityAviary,
@@ -41,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trajectory-seed", type=int, default=123)
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour", "detour_planar", "detour_planar_local"],
+        choices=["waypoint", "detour", "detour_planar", "detour_planar_local", "detour_planar_raycast"],
         default="waypoint",
         help="Environment/expert variant used for trajectory rollouts.",
     )
@@ -60,6 +61,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def make_env(task_variant: str):
+    if task_variant == "detour_planar_raycast":
+        return DetourPlanarRaycastAviary(gui=False)
     if task_variant == "detour_planar_local":
         return DetourPlanarLocalObsAviary(gui=False)
     if task_variant == "detour_planar":
@@ -72,6 +75,8 @@ def make_env(task_variant: str):
 
 
 def expert_policy(task_variant: str):
+    if task_variant == "detour_planar_raycast":
+        return None
     if task_variant == "detour_planar_local":
         return detour_planar_local_obs_expert
     if task_variant == "detour_planar":
@@ -196,7 +201,7 @@ def rollout_expert(seed: int, task_variant: str) -> dict:
     episode_return = 0.0
     steps = 0
     while True:
-        action = policy(obs)
+        action = env.privileged_expert_action() if policy is None else policy(obs)
         obs, reward, terminated, truncated, info = env.step(action)
         positions.append(np.asarray(info["position"], dtype=np.float32))
         episode_return += float(reward)

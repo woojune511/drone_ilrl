@@ -9,6 +9,7 @@ import numpy as np
 
 from ilrl_lab.envs import (
     DetourPlanarLocalObsAviary,
+    DetourPlanarRaycastAviary,
     DetourPlanarVelocityAviary,
     DetourWaypointVelocityAviary,
     WaypointVelocityAviary,
@@ -22,6 +23,9 @@ from ilrl_lab.experts import (
 
 
 def build_env_and_expert(task_variant: str, gui: bool):
+    if task_variant == "detour_planar_raycast":
+        env = DetourPlanarRaycastAviary(gui=gui)
+        return env, lambda _obs: env.privileged_expert_action()
     if task_variant == "detour_planar_local":
         return DetourPlanarLocalObsAviary(gui=gui), detour_planar_local_obs_expert
     if task_variant == "detour_planar":
@@ -42,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gui", action="store_true", help="Run PyBullet with GUI enabled.")
     parser.add_argument(
         "--task-variant",
-        choices=["waypoint", "detour", "detour_planar", "detour_planar_local"],
+        choices=["waypoint", "detour", "detour_planar", "detour_planar_local", "detour_planar_raycast"],
         default="waypoint",
         help="Task variant and matching expert to use for collection.",
     )

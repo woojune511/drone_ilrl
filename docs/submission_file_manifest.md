@@ -11,6 +11,7 @@ This project is intended to present a compact IL -> RL pipeline for a detour nav
 - `docs/action_space_roadmap.md`: next-step plan for a deployment-oriented drone action interface.
 - `docs/detour_planar_bc_baseline.md`: first clean BC baseline for the planar action variant.
 - `docs/detour_planar_local_bc_baseline.md`: first clean BC baseline after removing absolute position/goal from planar observations.
+- `docs/detour_planar_raycast_bc_baseline.md`: first BC baseline after replacing local detour target with raycast perception.
 - `docs/bc_to_ppo_distribution_shift.md`: technical diagnosis of BC -> PPO distribution shift and mitigation attempts.
 
 ## Core Implementation

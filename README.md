@@ -54,6 +54,7 @@ Detailed write-up:
 - `docs/action_space_roadmap.md`
 - `docs/detour_planar_bc_baseline.md`
 - `docs/detour_planar_local_bc_baseline.md`
+- `docs/detour_planar_raycast_bc_baseline.md`
 - `docs/submission_file_manifest.md`
 - `docs/bc_to_ppo_distribution_shift.md`
 - `docs/experiment_results.md`
@@ -224,6 +225,23 @@ Initial clean BC baseline for this local-observation variant:
 - BC mean final distance: `0.066m`
 
 See `docs/detour_planar_local_bc_baseline.md`.
+
+First raycast-observation baseline:
+
+```bash
+uv run --all-extras python scripts/collect_expert_rollouts.py \
+  --task-variant detour_planar_raycast \
+  --episodes 50 \
+  --quality-tag clean_planar_raycast
+```
+
+Initial clean BC result:
+
+- expert success: `1.0`
+- BC success: `0.84` over `50` deterministic episodes
+- BC mean final distance: `0.245m`
+
+See `docs/detour_planar_raycast_bc_baseline.md`.
 
 ### Run the main detour seed sweep
 

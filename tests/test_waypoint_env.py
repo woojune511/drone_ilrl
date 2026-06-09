@@ -4,6 +4,7 @@ import numpy as np
 
 from ilrl_lab.envs import (
     DetourPlanarLocalObsAviary,
+    DetourPlanarRaycastAviary,
     DetourPlanarVelocityAviary,
     DetourWaypointVelocityAviary,
     WaypointVelocityAviary,
@@ -106,6 +107,34 @@ def test_detour_planar_local_obs_env_expert_smoke() -> None:
 
         obs, reward, terminated, truncated, info = env.step(action)
         assert obs.shape == env.observation_space.shape
+        assert isinstance(reward, float)
+        if terminated or truncated:
+            break
+
+    env.close()
+
+
+def test_detour_planar_raycast_env_privileged_expert_smoke() -> None:
+    env = DetourPlanarRaycastAviary(gui=False, episode_len_sec=2.0)
+    obs, info = env.reset(seed=0)
+
+    assert obs.shape == env.observation_space.shape
+    assert env.observation_space.shape == (33,)
+    assert env.action_space.shape == (3,)
+    assert info["task_variant"] == "detour_planar_raycast"
+    assert info["observation_variant"] == "raycast_depth"
+    assert "raycast_min_distance_norm" in info
+
+    for _ in range(8):
+        action = env.privileged_expert_action()
+        assert action.shape == env.action_space.shape
+        assert np.all(action <= env.action_space.high + 1e-6)
+        assert np.all(action >= env.action_space.low - 1e-6)
+
+        obs, reward, terminated, truncated, info = env.step(action)
+        assert obs.shape == env.observation_space.shape
+        assert np.all(obs[-env.ray_count :] >= -1e-6)
+        assert np.all(obs[-env.ray_count :] <= 1.0 + 1e-6)
         assert isinstance(reward, float)
         if terminated or truncated:
             break
