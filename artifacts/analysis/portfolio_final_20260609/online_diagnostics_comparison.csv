@@ -1,0 +1,4 @@
+method,protocol,num_policy_seeds,success_rate_mean,success_rate_std,mean_final_distance_mean,collision_rate_mean,bc_probe_action_l2_mean,source
+BC+PPO KL/freeze,10 episode online eval,2,0.35,0.2499999999999999,0.3237018010950727,0.0,0.0795904509723186,artifacts/analysis/ppo_bc_strong_regularization_ablation_metrics_rerun_20260609_092402/variant_summary.csv
+BC+PPO expert BC loss,10 episode online eval,2,0.15,0.05,0.4574488780523826,0.1,0.1479252949357032,artifacts/analysis/ppo_expert_bc_loss_ablation_20260609_112015/variant_summary.csv
+BC+PPO expert-state aug,10 episode online eval,7,0.5857142857142856,0.2747912008810192,0.22201779946199068,0.014285714285714287,0.2051403820514679,artifacts/checkpoints/ppo_expert_bc_aug_ablation_20260609_124357;artifacts/checkpoints/ppo_expert_bc_aug005_more_seeds_20260609_135343

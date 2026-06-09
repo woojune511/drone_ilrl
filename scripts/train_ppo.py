@@ -11,6 +11,7 @@ import torch
 from ilrl_lab.bc import load_bc_checkpoint
 from ilrl_lab.ppo_training import (
     PeriodicEvalCallback,
+    build_bc_probe,
     build_ppo_model,
     build_training_env,
     evaluate_model,
@@ -32,6 +33,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--n-steps", type=int, default=1024)
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument(
+        "--n-envs",
+        type=int,
+        default=1,
+        help="Number of parallel training environments. Use >1 to speed up PyBullet rollouts.",
+    )
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--gae-lambda", type=float, default=0.95)
     parser.add_argument("--clip-range", type=float, default=0.2)
@@ -58,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+
 def main() -> None:
     args = parse_args()
     run_name = datetime.now().strftime(f"ppo_seed{args.seed}_%Y%m%d_%H%M%S")
@@ -67,8 +75,16 @@ def main() -> None:
 
     obs_mean = None
     obs_std = None
+    bc_probe = None
     if args.obs_norm_bc_checkpoint is not None:
         _, obs_mean, obs_std, _ = load_bc_checkpoint(args.obs_norm_bc_checkpoint, torch.device("cpu"))
+        bc_probe = build_bc_probe(
+            task_variant=args.task_variant,
+            bc_checkpoint=args.obs_norm_bc_checkpoint,
+            obs_mean=obs_mean,
+            obs_std=obs_std,
+            seed=args.seed + 30_000,
+        )
 
     env = build_training_env(
         gui=args.gui,
@@ -76,6 +92,7 @@ def main() -> None:
         task_variant=args.task_variant,
         obs_mean=obs_mean,
         obs_std=obs_std,
+        n_envs=args.n_envs,
     )
     model = build_ppo_model(env, args.seed, args)
 
@@ -87,6 +104,7 @@ def main() -> None:
         task_variant=args.task_variant,
         obs_mean=obs_mean,
         obs_std=obs_std,
+        bc_probe=bc_probe,
     )
 
     model.learn(total_timesteps=args.total_timesteps, callback=callback, progress_bar=False)
@@ -100,6 +118,7 @@ def main() -> None:
         task_variant=args.task_variant,
         obs_mean=obs_mean,
         obs_std=obs_std,
+        bc_probe=bc_probe,
     )
     final_eval.timesteps = int(args.total_timesteps)
 
@@ -112,6 +131,7 @@ def main() -> None:
         "learning_rate": args.learning_rate,
         "n_steps": args.n_steps,
         "batch_size": args.batch_size,
+        "n_envs": args.n_envs,
         "gamma": args.gamma,
         "gae_lambda": args.gae_lambda,
         "clip_range": args.clip_range,
@@ -119,9 +139,21 @@ def main() -> None:
         "vf_coef": args.vf_coef,
         "log_std_init": args.log_std_init,
         "obs_norm_bc_checkpoint": None if args.obs_norm_bc_checkpoint is None else str(args.obs_norm_bc_checkpoint),
+        "bc_probe": None
+        if bc_probe is None
+        else {
+            "num_states": bc_probe["num_states"],
+            "seed": bc_probe["seed"],
+            "episodes": bc_probe["episodes"],
+            "max_steps_per_episode": bc_probe["max_steps_per_episode"],
+            "stride": bc_probe["stride"],
+        },
         "task_variant": args.task_variant,
         "final_model_path": str(final_model_path),
         "best_model_path": str(callback.best_model_path),
+        "best_eval_path": str(callback.best_record_path),
+        "best_eval": None if callback.best_record is None else asdict(callback.best_record),
+        "best_model_selection": "highest_success_rate_then_lowest_final_distance_then_highest_return",
         "eval_history_path": str(callback.history_path),
         "final_eval": asdict(final_eval),
     }

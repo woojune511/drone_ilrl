@@ -1,0 +1,100 @@
+{
+  "output_dir": "artifacts/analysis/portfolio_final_20260609",
+  "headline_rows": [
+    {
+      "method": "BC-only",
+      "protocol": "50 episodes, seed 20000",
+      "num_policy_seeds": 1,
+      "success_rate_mean": 0.54,
+      "success_rate_std": 0.0,
+      "mean_final_distance_mean": 0.26853786792730316,
+      "mean_final_distance_std": 0.0,
+      "mean_episode_return_mean": 84.67249731202782,
+      "mean_episode_return_std": 0.0,
+      "source": "artifacts/evals/bc_clean50_50eps_seed20000_20260609.json"
+    },
+    {
+      "method": "BC+PPO KL/freeze best",
+      "protocol": "50 episodes, seed 20000",
+      "num_policy_seeds": 2,
+      "success_rate_mean": 0.54,
+      "success_rate_std": 0.0,
+      "mean_final_distance_mean": 0.2685378679273031,
+      "mean_final_distance_std": 0.0,
+      "mean_episode_return_mean": 84.67249731202782,
+      "mean_episode_return_std": 0.0,
+      "source": "artifacts/evals/strong_reg_best_50eps_20260609/best_50eps_summary.csv"
+    },
+    {
+      "method": "BC+PPO expert-state aug final",
+      "protocol": "50 episodes, seed 20000",
+      "num_policy_seeds": 5,
+      "success_rate_mean": 0.7279999852180481,
+      "success_rate_std": 0.10925199836492538,
+      "mean_final_distance_mean": 0.15867845714092255,
+      "mean_final_distance_std": 0.028158361092209816,
+      "mean_episode_return_mean": 89.71070861816406,
+      "mean_episode_return_std": 14.728339195251465,
+      "source": "artifacts/evals/aug005_final_seed7_50eps_seed20000_20260609.json;artifacts/evals/aug005_final_seed19_50eps_seed20000_20260609.json;artifacts/evals/aug005_more_final_seed11_50eps_seed20000_20260609.json;artifacts/evals/aug005_more_final_seed23_50eps_seed20000_20260609.json;artifacts/evals/aug005_more_final_seed31_50eps_seed20000_20260609.json"
+    },
+    {
+      "method": "BC+PPO expert-state aug best",
+      "protocol": "50 episodes, seed 20000",
+      "num_policy_seeds": 5,
+      "success_rate_mean": 0.7919999957084656,
+      "success_rate_std": 0.10400000959634781,
+      "mean_final_distance_mean": 0.1530492603778839,
+      "mean_final_distance_std": 0.04070490226149559,
+      "mean_episode_return_mean": 81.00337982177734,
+      "mean_episode_return_std": 10.787904739379883,
+      "source": "artifacts/evals/aug005_best_seed7_50eps_seed20000_20260609.json;artifacts/evals/aug005_best_seed11_50eps_seed20000_20260609.json;artifacts/evals/aug005_best_seed19_50eps_seed20000_20260609.json;artifacts/evals/aug005_best_seed23_50eps_seed20000_20260609.json;artifacts/evals/aug005_best_seed31_50eps_seed20000_20260609.json"
+    }
+  ],
+  "diagnostic_rows": [
+    {
+      "method": "BC+PPO KL/freeze",
+      "protocol": "10 episode online eval",
+      "num_policy_seeds": 2,
+      "success_rate_mean": 0.35,
+      "success_rate_std": 0.2499999999999999,
+      "mean_final_distance_mean": 0.3237018010950727,
+      "collision_rate_mean": 0.0,
+      "bc_probe_action_l2_mean": 0.0795904509723186,
+      "source": "artifacts/analysis/ppo_bc_strong_regularization_ablation_metrics_rerun_20260609_092402/variant_summary.csv"
+    },
+    {
+      "method": "BC+PPO expert BC loss",
+      "protocol": "10 episode online eval",
+      "num_policy_seeds": 2,
+      "success_rate_mean": 0.15,
+      "success_rate_std": 0.05,
+      "mean_final_distance_mean": 0.4574488780523826,
+      "collision_rate_mean": 0.1,
+      "bc_probe_action_l2_mean": 0.1479252949357032,
+      "source": "artifacts/analysis/ppo_expert_bc_loss_ablation_20260609_112015/variant_summary.csv"
+    },
+    {
+      "method": "BC+PPO expert-state aug",
+      "protocol": "10 episode online eval",
+      "num_policy_seeds": 7,
+      "success_rate_mean": 0.5857142857142856,
+      "success_rate_std": 0.2747912008810192,
+      "mean_final_distance_mean": 0.22201779946199068,
+      "collision_rate_mean": 0.014285714285714287,
+      "bc_probe_action_l2_mean": 0.2051403820514679,
+      "source": "artifacts/checkpoints/ppo_expert_bc_aug_ablation_20260609_124357;artifacts/checkpoints/ppo_expert_bc_aug005_more_seeds_20260609_135343"
+    }
+  ],
+  "outputs": [
+    "headline_50ep_comparison.csv",
+    "headline_50ep_mean_episode_return.png",
+    "headline_50ep_mean_final_distance.png",
+    "headline_50ep_success_rate.png",
+    "manifest.json",
+    "online_diagnostics_bc_probe_action_l2.png",
+    "online_diagnostics_collision_rate.png",
+    "online_diagnostics_comparison.csv",
+    "online_diagnostics_mean_final_distance.png",
+    "online_diagnostics_success_rate.png"
+  ]
+}

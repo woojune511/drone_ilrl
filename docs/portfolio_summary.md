@@ -2,7 +2,7 @@
 
 ## One-line project summary
 
-Built an imitation-learning-to-reinforcement-learning pipeline for drone navigation, then designed a harder detour-constrained benchmark where BC-initialized PPO outperformed scratch PPO under a matched training budget.
+Built an imitation-learning-to-reinforcement-learning pipeline for drone navigation, diagnosed BC-to-PPO distribution shift, and improved detour-task success over BC-only using expert-state augmentation with scripted relabeling.
 
 ## Problem
 
@@ -36,7 +36,28 @@ This created a non-greedy navigation problem where the agent had to move away fr
 - detour-aware reward shaping
 - a less noisy evaluation protocol (`30` eval episodes during training, `50` for best-checkpoint re-evaluation)
 
-## Final matched experiment
+## Current portfolio result
+
+Setup:
+
+- task: detour navigation
+- base policy: BC trained from scripted expert trajectories
+- PPO fine-tuning budget: `50k` steps
+- PPO seeds: `7, 11, 19, 23, 31`
+- evaluation: `50` deterministic episodes with seed `20000`
+- model selection: validation-best checkpoint, with final checkpoint reported separately
+- method: expert-state augmentation with scripted relabeling during PPO updates
+
+| Method | Success | Mean final distance | Mean return |
+|---|---:|---:|---:|
+| BC-only | `0.54` | `0.269` | `84.67` |
+| BC+PPO KL/freeze best | `0.54` | `0.269` | `84.67` |
+| BC+PPO expert-state aug final | `0.728 +/- 0.109` | `0.159 +/- 0.028` | `89.71 +/- 14.73` |
+| BC+PPO expert-state aug best | `0.792 +/- 0.104` | `0.153 +/- 0.041` | `81.00 +/- 10.79` |
+
+This is the current portfolio headline because it shows not just BC initialization, but a targeted fix for the BC -> PPO distribution-shift failure mode.
+
+## Earlier matched experiment
 
 Setup:
 
@@ -59,28 +80,96 @@ Setup:
 - the detour task made imitation useful in a way the easy waypoint task did not
 - task design, reward shaping, and evaluation protocol turned out to be just as important as the learning algorithm
 
+## Current technical diagnosis
+
+The most important remaining AI problem is **BC -> PPO distribution shift**.
+
+After the transfer alignment fix, the PPO actor starts from the same action function as BC. The remaining failure mode is later fine-tuning:
+
+- early checkpoints can preserve BC-like detour behavior
+- PPO updates can drift away from the BC controller after actor unfreezing
+- final success can drop even when the policy still reaches the corridor or goal stage
+- collision and final-settling failures increase in unstable seeds
+
+This is now documented as a separate technical analysis:
+
+- `docs/bc_to_ppo_distribution_shift.md`
+
+That document records:
+
+- the AI failure mode
+- the interventions tried so far
+- the diagnostic metrics added
+- the current ablation evidence
+- candidate next interventions
+
+The latest strong-regularization ablation sharpened the conclusion:
+
+- best checkpoints re-evaluated over `50` episodes reached up to `0.54` success
+- final checkpoints often collapsed after actor unfreezing
+- `freeze50k + bc_kl_coef=0.003` was the most stable final setting
+- aggressive low exploration did not solve the issue and increased collisions in final policies
+
+The latest expert-state augmentation ablation produced the first stronger PPO-improvement signal:
+
+- method: perturb expert trajectory states, recompute relative-goal features, reject invalid wall states, and relabel actions with the scripted expert
+- setup: `50k` PPO steps, `freeze_actor_steps=25k`, `bc_kl_coef=0.003`, `expert_bc_loss_coef=1.0`, `log_std_init=-1.0`
+- best current variant: `position_noise_std=0.05`, `velocity_noise_std=0.05`, `2` augmented copies
+- final online eval across seeds `7, 19`: mean success `0.80`, mean final distance `0.129`, collision `0.00`
+- final `50`-episode re-evaluation across seeds `7, 11, 19, 23, 31`: mean success `0.728`, mean final distance `0.159`
+- validation-best `50`-episode re-evaluation across seeds `7, 11, 19, 23, 31`: mean success `0.792`, mean final distance `0.153`
+
+This is now stronger than the standalone BC reference under the same `50`-episode evaluation seed (`0.54` success, `0.269m` final distance). The current portfolio claim should still mention residual late-training sensitivity because seed `31` final only reached `0.56` while its validation-best checkpoint reached `0.82`, but the technical story is now much better: PPO did not merely preserve BC, but improved on average after adding local recovery supervision around expert states.
+
+Final portfolio artifacts:
+
+- comparison tables and plots: `artifacts/analysis/portfolio_final_20260609/`
+- headline table: `artifacts/analysis/portfolio_final_20260609/headline_50ep_comparison.csv`
+- headline plots:
+  - `artifacts/analysis/portfolio_final_20260609/headline_50ep_success_rate.png`
+  - `artifacts/analysis/portfolio_final_20260609/headline_50ep_mean_final_distance.png`
+- diagnostics table: `artifacts/analysis/portfolio_final_20260609/online_diagnostics_comparison.csv`
+
+Seed `31` failure analysis:
+
+- output directory: `artifacts/analysis/aug005_seed31_final_rollouts_20260609/`
+- success rate: `0.56`
+- validation-best success rate: `0.82`
+- collision rate: `0.00`
+- reached exit stage rate: `1.00`
+- reached goal stage rate: `1.00`
+- failures: `22 / 50`
+- all failures still reached the goal stage
+- failure mean min distance: `0.105m`
+- failure mean final distance: `0.358m`
+- failure mean final speed: `0.076m/s`
+
+Interpretation: seed `31` is not primarily a wall-navigation or exploration failure. It reaches the corridor and goal stage without collisions, but the final checkpoint fails the success condition after approaching the target. The validation-best checkpoint recovers to `0.82`, so the remaining weakness is late-training drift/final approach stability, not detour discovery.
+
 ## Resume bullet options
 
 ### Direct, metric-heavy
 
-- Built a drone IL->RL benchmark in PyBullet and showed that BC-initialized PPO outperformed scratch PPO on a detour-constrained navigation task, improving final success from `0.00` to `0.111` and reducing mean final goal distance from `0.732m` to `0.476m` under a matched `300k`-step budget after fixing BC->PPO transfer alignment.
+- Built a PyBullet drone IL->RL benchmark for detour-constrained navigation and improved `50`-episode success from a BC-only `0.54` baseline to `0.792 +/- 0.104` with BC-initialized PPO, expert-state augmentation, and validation-best checkpoint selection across `5` PPO seeds.
 
 ### More conservative
 
-- Designed a detour-constrained drone navigation benchmark and evaluation pipeline, then demonstrated that BC-initialized PPO achieved nonzero mean success across `3` seeds while scratch PPO remained at `0.00`, with mean final distance reduced from `0.732m` to `0.476m` in the aligned rerun.
+- Designed a detour-constrained drone navigation benchmark and evaluation pipeline, then showed that expert-state augmentation with scripted relabeling improved BC-initialized PPO over standalone BC under a shared `50`-episode protocol, reducing mean final distance from `0.269m` to `0.153m`.
 
 ### More engineering-focused
 
-- Implemented a drone imitation-learning and PPO fine-tuning pipeline with custom PyBullet tasks, expert rollout collection, BC actor initialization, reward shaping, and experiment visualization to study sample-efficiency gains from IL priors.
+- Implemented a drone imitation-learning and PPO fine-tuning pipeline with custom PyBullet tasks, scripted expert rollout collection, BC actor initialization, auxiliary expert losses, state augmentation, checkpoint selection, and experiment visualization to study stable IL->RL transfer.
 
 ## Interview framing
 
 If asked what was learned from the project, the strongest answer is:
 
-> The main lesson was that algorithm choice alone was not enough. The big unlock came from redesigning the task so imitation had something meaningful to contribute, then making reward shaping and evaluation robust enough that the comparison stopped being dominated by noise.
+> The main lesson was that getting BC initialization correct was only the first step. After I fixed the BC-to-PPO transfer so the initial policies matched exactly, the real bottleneck became distribution shift during PPO fine-tuning. KL regularization and actor freezing mostly preserved BC, but did not improve it. The improvement came from adding local recovery supervision: perturbing expert trajectory states, recomputing task features, rejecting invalid wall states, and relabeling actions with the scripted expert. That moved the result from BC-only `0.54` success to `0.792` validation-best success across five PPO seeds, while also exposing the remaining weakness as late-training final-approach drift.
 
 ## Key artifacts
 
 - Main report: `docs/experiment_results.md`
+- Portfolio comparison: `artifacts/analysis/portfolio_final_20260609/`
+- Distribution-shift diagnosis: `docs/bc_to_ppo_distribution_shift.md`
 - Matched comparison figures: `artifacts/figures/detour_aligned_matched_compare/`
 - Main rerun note: `docs/normalization_fix_rerun.md`

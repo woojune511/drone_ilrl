@@ -199,7 +199,7 @@ Test whether imitation-based initialization improves PPO sample efficiency.
 
 Ensure fair comparisons between methods.
 
-### New File To Add
+### Existing File
 
 - `scripts/evaluate_policy.py`
 
@@ -212,10 +212,10 @@ Ensure fair comparisons between methods.
 
 ### Tasks
 
-- [ ] Implement a common evaluation loop
-- [ ] Support checkpoint path input
-- [ ] Save JSON summaries
-- [ ] Reuse the same evaluation settings across all methods
+- [x] Implement a common evaluation loop
+- [x] Support checkpoint path input
+- [x] Save JSON summaries
+- [x] Reuse the same evaluation settings across all methods
 
 ### Acceptance Criteria
 
@@ -355,12 +355,12 @@ Does IL help more when the control problem becomes harder or more partially obse
 
 ## Suggested File Creation Order
 
-Implement in this order:
+Implemented/creation order:
 
 1. `scripts/train_ppo.py`
 2. `scripts/evaluate_policy.py`
 3. `scripts/fine_tune_ppo_from_bc.py`
-4. `scripts/plot_learning_curves.py`
+4. `scripts/plot_experiment_results.py`
 
 Reason:
 

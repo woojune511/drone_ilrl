@@ -217,9 +217,11 @@ class WaypointVelocityAviary(BaseRLAviary):
     def _build_info(self, success: bool) -> dict[str, float | bool | list[float]]:
         state = self._getDroneStateVector(0)
         distance = float(np.linalg.norm(self.target_pos - state[0:3]))
+        speed = float(np.linalg.norm(state[10:13]))
         return {
             "success": success,
             "distance_to_goal": distance,
+            "speed": speed,
             "goal": self.target_pos.astype(float).tolist(),
             "position": state[0:3].astype(float).tolist(),
         }

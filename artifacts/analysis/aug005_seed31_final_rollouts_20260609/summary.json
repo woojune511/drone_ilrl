@@ -1,0 +1,19 @@
+{
+  "run_summary": "artifacts/checkpoints/ppo_expert_bc_aug005_more_seeds_20260609_135343/expertbc_aug005_coef1_freeze25k/detour/ppo_bc_init_seed31_20260609_141521",
+  "checkpoint_path": "artifacts/checkpoints/ppo_expert_bc_aug005_more_seeds_20260609_135343/expertbc_aug005_coef1_freeze25k/detour/ppo_bc_init_seed31_20260609_141521/final_model.zip",
+  "train_seed": 31,
+  "episodes": 50,
+  "success_rate": 0.56,
+  "mean_final_distance": 0.20628819443285465,
+  "mean_min_distance": 0.0927953365445137,
+  "mean_final_speed": 0.10596649892628193,
+  "collision_rate": 0.0,
+  "reached_exit_stage_rate": 1.0,
+  "reached_goal_stage_rate": 1.0,
+  "failure_count": 22,
+  "failure_reached_goal_stage_rate": 1.0,
+  "failure_mean_min_distance": 0.10547423701394688,
+  "failure_mean_final_distance": 0.3578350381417708,
+  "failure_mean_final_speed": 0.07590320486236703,
+  "failure_collision_rate": 0.0
+}
